@@ -1,0 +1,28 @@
+quantity,value,value_display,unit,note
+raw_rows,90189,"90,189",count,Rows in the raw input (§7.7 step 4).
+documented_rows,90189,"90,189",count,"Documented size of the dataset; a mismatch is a finding, not an adjustment."
+recorded_sha256,5ab54d761fbddcd50de7b88e4eaf7837cba4569474f50c043a4d17ee342c46bd,5ab54d761fbddcd50de7b88e4eaf7837cba4569474f50c043a4d17ee342c46bd,text,Verified at step 2 against assumptions.md A-072.
+unassignable_rows,0,0,count,"version missing; never assigned, so in neither SRM arm (§2.2, A-051)."
+unassignable_share,0,0.0000%,share,Downgrade threshold 0.1% of raw rows.
+duplicate_userids,0,0,count,"Uniqueness asserted, not assumed (§5.2)."
+duplicates_same_arm_identical,0,0,count,Export artefact: one row kept.
+duplicates_same_arm_conflicting,0,0,count,Unresolvable from this data: userid excluded from the metric analysis.
+duplicates_cross_arm,0,0,count,Cross-contaminated: excluded from both arms; ITT compromised for them.
+duplicates_cross_arm_share,0,0.0000%,share,Downgrade threshold 0.1% of raw rows.
+rows_dropped_as_export_artefact,0,0,count,
+missing.retention_1.gate_30,0,0,count,guardrail; excluded from this metric only (§5.3).
+missing_share.retention_1.gate_30,0,0.0000%,share,Share of that arm's assignment count (A-065).
+missing.retention_1.gate_40,0,0,count,guardrail; excluded from this metric only (§5.3).
+missing_share.retention_1.gate_40,0,0.0000%,share,Share of that arm's assignment count (A-065).
+differential_missingness.retention_1,0,0.00,pp,Variant minus control; reported regardless of threshold (§5.3).
+missing.retention_7.gate_30,0,0,count,primary; excluded from this metric only (§5.3).
+missing_share.retention_7.gate_30,0,0.0000%,share,Share of that arm's assignment count (A-065). Downgrade threshold 0.5%.
+missing.retention_7.gate_40,0,0,count,primary; excluded from this metric only (§5.3).
+missing_share.retention_7.gate_40,0,0.0000%,share,Share of that arm's assignment count (A-065). Downgrade threshold 0.5%.
+differential_missingness.retention_7,0,0.00,pp,Variant minus control; reported regardless of threshold (§5.3).
+assigned.gate_30,44700,"44,700",count,"SRM denominator component, fixed before any exclusion."
+assigned.gate_40,45489,"45,489",count,"SRM denominator component, fixed before any exclusion."
+denominator.retention_1.gate_30,44700,"44,700",count,Denominator actually used for this metric and arm.
+denominator.retention_1.gate_40,45489,"45,489",count,Denominator actually used for this metric and arm.
+denominator.retention_7.gate_30,44700,"44,700",count,Denominator actually used for this metric and arm.
+denominator.retention_7.gate_40,45489,"45,489",count,Denominator actually used for this metric and arm.

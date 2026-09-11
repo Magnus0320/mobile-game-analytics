@@ -1,0 +1,16 @@
+quantity,value,value_display,unit,note
+srm_n,90189,"90,189",count,Assignment population (§2.2 literal rule).
+control_count,44700,"44,700",count,gate_30
+variant_count,45489,"45,489",count,gate_40
+expected_per_arm,45094.5,45094.5000,statistic,Under the hypothesised 1:1 allocation (A-008).
+observed_control_share,0.495625852377,0.495626,proportion,
+imbalance_rows,-789,-789,count,control minus variant
+exact_binomial_p,0.00869223438909,0.00869,p,PRIMARY SRM test: two-sided exact binomial against p=0.5 (A-010).
+chi2_statistic,6.90240494961,6.9024,statistic,"Goodness-of-fit, 1 df, reported alongside as a cross-check."
+chi2_p,0.00860798781084,0.00861,p,
+failure_threshold,0.001,0.001,p,"§2.3, A-011."
+tripped,false,False,text,"Reported unconditionally, whether or not it trips (§2.2)."
+post_exclusion.retention_1.gate_30,44700,"44,700",count,"Descriptive differential-exclusion check: no test, no threshold."
+post_exclusion.retention_1.gate_40,45489,"45,489",count,"Descriptive differential-exclusion check: no test, no threshold."
+post_exclusion.retention_7.gate_30,44700,"44,700",count,"Descriptive differential-exclusion check: no test, no threshold."
+post_exclusion.retention_7.gate_40,45489,"45,489",count,"Descriptive differential-exclusion check: no test, no threshold."

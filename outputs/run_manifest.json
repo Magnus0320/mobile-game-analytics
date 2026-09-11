@@ -1,0 +1,241 @@
+{
+  "decision": {
+    "precondition": "clean",
+    "recommendation": "Keep the gate at level 30.",
+    "recommendation_withheld": false,
+    "rule_path": "Stage 1: clean | Stage 2: R3 | Stage 3: R10",
+    "stage2_branch": "R3",
+    "stage2_drives_recommendation": true,
+    "stage3_modifier": "R10"
+  },
+  "denominators": {
+    "assigned.gate_30": 44700,
+    "assigned.gate_40": 45489,
+    "engagement.all": 90189,
+    "engagement.both": 90189,
+    "engagement.gate_30": 44700,
+    "engagement.gate_40": 45489,
+    "raw_rows": 90189,
+    "recorded_row_count": 90189,
+    "retention_1.gate_30": 44700,
+    "retention_1.gate_40": 45489,
+    "retention_7.gate_30": 44700,
+    "retention_7.gate_40": 45489,
+    "srm_n": 90189,
+    "unassignable_rows": 0
+  },
+  "environment": {
+    "machine": "arm64",
+    "matplotlib_backend": "Agg",
+    "matplotlib_version": "3.11.1",
+    "n_resamples": 10000,
+    "packages": {
+      "matplotlib": "3.11.1",
+      "numpy": "2.5.3",
+      "pandas": "3.0.5",
+      "scipy": "1.18.1",
+      "statsmodels": "0.15.0"
+    },
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python_implementation": "CPython",
+    "python_version": "3.12.14",
+    "random_seed": 20260910
+  },
+  "findings": [
+    {
+      "description": "Interpreter, resolved package versions, matplotlib backend and the single RNG seed recorded. Package versions were checked against requirements.lock.txt.",
+      "finding_id": "environment.resolved",
+      "step": 1
+    },
+    {
+      "description": "Raw input located and its SHA-256 verified against the value recorded in assumptions.md entry A-072.",
+      "finding_id": "input.checksum_verified",
+      "step": 2
+    },
+    {
+      "description": "Raw row count and column set recorded.",
+      "finding_id": "input.raw_shape",
+      "step": 4
+    },
+    {
+      "description": "Raw row count pandas sees, compared against the data-row count recorded in assumptions.md A-072. Both exclude the header row. Step 20 asserts they are equal.",
+      "finding_id": "input.row_count_vs_record",
+      "step": 4
+    },
+    {
+      "description": "Every value in version, retention_1, retention_7 and sum_gamerounds lies inside its column's token sets. The file is the file ARCHITECTURE.md describes.",
+      "finding_id": "structural.gate_passed",
+      "step": 5
+    },
+    {
+      "description": "Rows whose version is missing were never assigned, so they enter neither arm of the SRM denominator and are excluded from everything.",
+      "finding_id": "unassignable.count",
+      "step": 7
+    },
+    {
+      "description": "Sample ratio mismatch tested on the assignment population against a hypothesised 1:1 allocation (A-008), by two-sided exact binomial test with the 1-df chi-square goodness-of-fit statistic reported alongside. The denominator is fixed before any exclusion (\u00a72.2).",
+      "finding_id": "srm.result",
+      "step": 8
+    },
+    {
+      "description": "Three-state coercion preserved the file: non-missing retention values are exactly {True, False}, state counts sum to the raw row count, every coerced state count equals its pre-coercion source-token total, version's non-missing values are exactly the arm set with the unassignable count equal to its missing count, and sum_gamerounds is a non-negative nullable integer.",
+      "finding_id": "coercion.assertions_passed",
+      "step": 9
+    },
+    {
+      "description": "userid uniqueness was asserted rather than assumed, and the result is reported whether or not duplicates exist (\u00a75.2).",
+      "finding_id": "duplicates.uniqueness_assertion",
+      "step": 10
+    },
+    {
+      "description": "Missing values in retention_1, counted per arm and excluded from that metric only, never from the whole analysis (\u00a75.3). Differential missingness between arms is reported regardless of whether any threshold is approached.",
+      "finding_id": "missing.retention_1",
+      "step": 11
+    },
+    {
+      "description": "Missing values in retention_7, counted per arm and excluded from that metric only, never from the whole analysis (\u00a75.3). Differential missingness between arms is reported regardless of whether any threshold is approached.",
+      "finding_id": "missing.retention_7",
+      "step": 11
+    },
+    {
+      "description": "Post-exclusion arm counts reported next to the SRM result as a DESCRIPTIVE check on whether exclusions fell unevenly between arms (\u00a72.2). No test and no threshold is attached: a second SRM-style test on a cleaned population would reintroduce exactly the cleaning-upstream-of-integrity problem the rule exists to prevent.",
+      "finding_id": "populations.differential_exclusion",
+      "step": 12
+    },
+    {
+      "description": "Power reported descriptively for a fixed-n dataset: it answers what this experiment could have seen, and is not a sample-size calculation (\u00a73, A-013).",
+      "finding_id": "power.computed",
+      "step": 13
+    },
+    {
+      "description": "Primary inference on retention_7: pooled-variance two-sided z-test, unpooled analytic interval, and the seeded stratified bootstrap with 10000 resamples giving the percentile interval and its Monte Carlo standard error. The estimand is the intention-to-treat effect on assigned players (\u00a74.1, A-007).",
+      "finding_id": "primary.inference",
+      "step": 14
+    },
+    {
+      "description": "Reconciliation of the z-test and the bootstrap (\u00a74.3). The z-test is the confirmatory instrument and decides significance; the bootstrap is the estimation instrument and decides the action-threshold comparison. No conflict: the test and the interval agree.",
+      "finding_id": "conflict.evaluation",
+      "step": 15
+    },
+    {
+      "description": "Guardrail inference on retention_1: point estimate and 95% intervals reported with the same precision as the primary, with NO alpha allocated and NO test decision (\u00a71.2, A-003). The guardrail can hold a recommendation but never create one.",
+      "finding_id": "guardrail.inference",
+      "step": 16
+    },
+    {
+      "description": "sum_gamerounds summarised with and without the extreme observation, with the retained version primary in all cases (\u00a75.1, A-021), alongside the median and a mean winsorised at the pooled 99th percentile (cap 493). The extreme value is disclosed with its arm; it is implausible-but-unverifiable, and this dataset contains nothing that can adjudicate whether it is a human, a logging artefact or an automated client. It is kept because removing rows from a randomised experiment on the basis of an outcome variable is a post-randomisation selection process, and because it is already counted in the SRM denominator fixed at step 8.",
+      "finding_id": "engagement.descriptives",
+      "step": 17
+    },
+    {
+      "description": "Recommendation derived mechanically from \u00a71.6's three stages. The write-up quotes the full path \u2014 precondition state, branch, modifier \u2014 by rule name. No other consideration may alter it.",
+      "finding_id": "decision.pipeline",
+      "step": 18
+    }
+  ],
+  "headline": {
+    "bootstrap_mc_se_pp": 0.2610116885297426,
+    "ci_1_bootstrap_pp": [
+      -1.2490027458515311,
+      0.050673918364508796
+    ],
+    "ci_7_analytic_pp": [
+      -1.3281552418885545,
+      -0.3121044211526281
+    ],
+    "ci_7_bootstrap_pp": [
+      -1.3358084504831251,
+      -0.3085228953500248
+    ],
+    "delta_1_pp": -0.5905169787341458,
+    "delta_7_pp": -0.8201298315205913,
+    "p_7": 0.0015542499756143289
+  },
+  "input": {
+    "committed": false,
+    "dataset_slug": "mursideyarkin/mobile-games-ab-testing-cookie-cats",
+    "file_name": "cookie_cats.csv",
+    "note": "data/raw/ is git-ignored (\u00a75.5); the README documents the fetch.",
+    "raw_rows": 90189,
+    "recorded_row_count": 90189,
+    "sha256": "5ab54d761fbddcd50de7b88e4eaf7837cba4569474f50c043a4d17ee342c46bd"
+  },
+  "integrity": {
+    "downgrade_details": [],
+    "downgrade_sources": [],
+    "downgraded": false,
+    "srm_exact_binomial_p": 0.008692234389090954,
+    "srm_tripped": false
+  },
+  "outputs": [
+    {
+      "path": "outputs/figures/part3_01_retention_rates.png",
+      "sha256": "44a7450c6b2784aadc130595cc9deb2db2c19fe6c2f57199979d06446cab7fea"
+    },
+    {
+      "path": "outputs/figures/part3_02_effect_intervals.png",
+      "sha256": "7da970012b7af7f41d728ae76425af9981f33b156f212b544a58952c9cec8024"
+    },
+    {
+      "path": "outputs/figures/part3_03_power_curve.png",
+      "sha256": "fbee391e68343a321802434810c3fdf2c645f41ea08dc4596ca7eb62e009c9c5"
+    },
+    {
+      "path": "outputs/figures/part3_04_engagement_distribution.png",
+      "sha256": "d07990eeb11e8ae5335cd53da7ee0485bdf4269a79e70f724086802f05204548"
+    },
+    {
+      "path": "outputs/tables/part3_01_data_quality.csv",
+      "sha256": "af51e901f15bc09950455e23f773299f86d75f0ceb9a61c5e0aaab56b3644f9e"
+    },
+    {
+      "path": "outputs/tables/part3_02_srm.csv",
+      "sha256": "d161ec89d23368bfa339b0689f8fd60ac3370eb654eb199f67245e88f7e892bf"
+    },
+    {
+      "path": "outputs/tables/part3_03_power.csv",
+      "sha256": "f493b5ee0901e2f1c73980ba49abfe79871a0701fe3c4c06880e58e00a9e5373"
+    },
+    {
+      "path": "outputs/tables/part3_04_power_curve.csv",
+      "sha256": "5dfbacabeacafd1f9eab33050df10b62101415b77110ed88766afb88659fe58c"
+    },
+    {
+      "path": "outputs/tables/part3_05_retention_rates.csv",
+      "sha256": "92af720cecd190d3677c8abac8d8dc34b7bbba5a39c242567c2b38cba890dcc8"
+    },
+    {
+      "path": "outputs/tables/part3_06_primary_inference.csv",
+      "sha256": "0fad0d4c2b2ec9545a12889502d1d0bcd50c1a8bf217d9177e6a366fa4abcdbe"
+    },
+    {
+      "path": "outputs/tables/part3_07_guardrail_inference.csv",
+      "sha256": "31eb655d2a6460a60beece89c992d758277814e6c3a61994fedc013343a37175"
+    },
+    {
+      "path": "outputs/tables/part3_08_engagement.csv",
+      "sha256": "e8a26a552a3b446c5e86b13e21286fbf33045b10d6c239f41b3587f0fb1e4df9"
+    },
+    {
+      "path": "outputs/tables/part3_09_engagement_distribution.csv",
+      "sha256": "d89ee68870a36840ff546e56e16b269fb34a38b2f1786021c4c0e83907ceab61"
+    },
+    {
+      "path": "outputs/tables/part3_10_decision.csv",
+      "sha256": "b528b03601ac0d7ea364ac851522350ed0347bd1e16c169bde5de361d3b0db88"
+    },
+    {
+      "path": "outputs/tables/part3_11_findings.csv",
+      "sha256": "f0200c89cab4fc8158e1769ae47ca486bf64e46b60a6b3c18e161128ec942d84"
+    }
+  ],
+  "part": 3,
+  "preregistration": {
+    "architecture_blob_sha": "29b4f465421b18e8cd9dcbd2b7380e5962fd1305",
+    "architecture_commit": "c6d72f834359fba8b8748a0d7251592a8cab80c5",
+    "architecture_file_sha256": "1d8286d3aa77a917285fdb692b25493aedfe8485f99f7c8e45bde761d6b6bac9",
+    "assumptions_file_sha256": "939f2462d03605960cae644dac145202185ad525f2b0bf36714e1555736f9d8f",
+    "note": "The Part 3 report cites the architecture commit. The file hashes let a reader confirm the document was not altered after that commit without needing the repository."
+  },
+  "run_timestamp_utc": "2026-09-11T04:05:11+00:00"
+}

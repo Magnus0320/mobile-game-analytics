@@ -1,0 +1,5 @@
+metric,arm,successes,denominator,rate_pp,rate_pp_display,role
+retention_7,gate_30,8502,44700,19.0201342282,19.02,primary
+retention_7,gate_40,8279,45489,18.2000043967,18.20,primary
+retention_1,gate_30,20034,44700,44.8187919463,44.82,guardrail
+retention_1,gate_40,20119,45489,44.2282749676,44.23,guardrail

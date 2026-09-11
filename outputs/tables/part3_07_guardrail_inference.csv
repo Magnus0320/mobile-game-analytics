@@ -1,0 +1,9 @@
+quantity,value,value_display,unit,note
+delta_1_pp,-0.590516978734,-0.59,pp,Variant minus control.
+analytic_ci_low_pp,-1.23924394494,-1.24,pp,
+analytic_ci_high_pp,0.0582099874762,0.06,pp,
+bootstrap_ci_low_pp,-1.24900274585,-1.25,pp,CI1.
+bootstrap_ci_high_pp,0.0506739183645,0.05,pp,CI1.
+bootstrap_mc_se_pp,0.331584960161,0.3316,statistic,
+interval_excludes_zero,false,False,text,"A description of an interval, NOT a test decision (§1.2)."
+test_performed,false,False,text,"No alpha allocated and no p-value computed for the guardrail (§1.2, A-003)."

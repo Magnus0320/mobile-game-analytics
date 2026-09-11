@@ -1,0 +1,18 @@
+quantity,value,value_display,unit,note
+precondition,clean,clean,text,Stage 1: R0 then R6.
+precondition_detail,,,text,
+stage2_branch,R3,R3,text,Exactly one of R1-R5 fires; step 20 asserts it.
+stage2_drives_recommendation,true,True,text,False when a Stage 1 precondition fired.
+stage3_modifier,R10,R10,text,Stage 3 is not applied when Stage 1 fired.
+recommendation,Keep the gate at level 30.,Keep the gate at level 30.,text,
+recommendation_withheld,false,False,text,True only under R0 (§2.4).
+rule_path,Stage 1: clean | Stage 2: R3 | Stage 3: R10,Stage 1: clean | Stage 2: R3 | Stage 3: R10,text,The full path the write-up must quote.
+stage2_condition.R1,false,False,text,p<0.05 and CI7 lower bound > +1.00 pp
+stage2_condition.R2,false,False,text,"p<0.05, delta>0, CI7 lower bound <= +1.00 pp"
+stage2_condition.R3,true,True,text,p<0.05 and delta<0
+stage2_condition.R4,false,False,text,p>=0.05 and all of CI7 within +/-1.00 pp
+stage2_condition.R5,false,False,text,p>=0.05 and CI7 extends beyond +/-1.00 pp
+stage3_condition.R7,false,False,text,delta1>0 with CI1 excluding zero (favourable guardrail)
+stage3_condition.R8,false,False,text,"delta1<0, CI1 excludes zero, Stage 2 branch is R1"
+stage3_condition.R9,false,False,text,"delta1<0, CI1 excludes zero, Stage 2 branch is R2-R5"
+stage3_condition.R10,true,True,text,CI1 contains zero (quiet guardrail)

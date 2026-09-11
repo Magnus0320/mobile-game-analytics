@@ -906,3 +906,19 @@ IDs are assigned in write order and are never reserved in advance.
 - **Reason:** With 10,000 replicates the requested ranks fall between order statistics rather than on them, so some convention is unavoidable; linear interpolation is the one that treats both tails symmetrically and varies smoothly with the resample count. The practical effect is bounded by the gap between adjacent replicates, on the order of a thousandth of a percentage point against a 1.00 pp threshold, but it is recorded rather than waved away because it is an input to the rule that selects the recommendation.
 - **Affects:** `bootstrap.py`; both reported percentile intervals; the action-threshold comparison in rules R1, R2, R4 and R5.
 - **Falsifiable by:** An endpoint landing close enough to ±1.00 pp that the interpolation method changes which rule fires, which would be reported explicitly as a knife-edge result rather than resolved silently.
+
+---
+
+## Part 3 implementation session — dataset provenance (2026-09-11)
+
+### A-072 — Dataset provenance: slug, file name, row count and SHA-256 of the CSV as used
+- **Kind:** finding
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Record the input as Kaggle dataset slug `mursideyarkin/mobile-games-ab-testing-cookie-cats`, file name `cookie_cats.csv`, a row count of 90189 data rows, and SHA-256 `5ab54d761fbddcd50de7b88e4eaf7837cba4569474f50c043a4d17ee342c46bd`; the file is 2,707,297 bytes and its header line is `userid,version,sum_gamerounds,retention_1,retention_7`.
+- **Alternatives rejected:** Not applicable — this is an observation. The SHA-256 was obtained with `shasum -a 256` on the file as placed in `data/raw/`. The row count was obtained two independent ways that were required to agree before it was recorded: a line-based count treating a final unterminated line as a record, and a quote-aware `csv.reader` count; both returned 90189. No value in any data row was read in the course of recording this entry.
+- **Row count convention, stated explicitly:** the recorded figure is **data rows, excluding the header row**. This is the same quantity §7.7 step 4 records as the raw row count, so the provenance figure and the computed figure are directly comparable, and §7.7 step 20 asserts they are equal. Note that `wc -l` reports **90190** for this file, because it counts newline bytes and the file carries both a header line and a trailing newline; that figure is one greater than the data-row count and is not what this entry records. The distinction is written down because a silent one-row disagreement between the record and the analysis would send a reader hunting for an off-by-one in the wrong place.
+- **Reason:** §5.5 keeps `data/raw/` git-ignored because redistributing a Kaggle dataset is not ours to grant, and records provenance here instead so that "reproduces exactly" is a claim a reader can check rather than take on trust. The entrypoint verifies this checksum at §7.7 step 2 before anything runs, reading the value from this entry rather than from a constant in code (A-064), so this file remains the single source of truth for it.
+- **Affects:** §7.7 step 2's verification and therefore whether the run proceeds at all; the run manifest's input block; the README fetch step; the reproducibility claim in full.
+- **Falsifiable by:** A different SHA-256 on a copy fetched from the same slug, which would mean the dataset was revised after this run and would make every number in the Part 3 report specific to the revision recorded here. That is precisely what this entry exists to detect.

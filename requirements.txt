@@ -1,0 +1,14 @@
+# Direct dependencies for Part 3, pinned with == (ARCHITECTURE.md §7.5).
+# Permitted libraries for Part 3 are exactly these five (§7.5, A-027); adding a
+# dependency requires an assumptions.md entry.
+#
+# This file documents intent. Install for reproduction from requirements.lock.txt,
+# which is the fully resolved set including transitive dependencies.
+#
+# The Kaggle CLI is deliberately absent: it is a one-time fetch tool, not part of
+# the analysis environment this lock file certifies. See the README fetch step.
+pandas==3.0.5
+numpy==2.5.3
+scipy==1.18.1
+statsmodels==0.15.0
+matplotlib==3.11.1

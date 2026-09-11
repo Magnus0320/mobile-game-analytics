@@ -696,3 +696,202 @@ it. Written before any data access and before the repository was initialised.
 - **Reason:** Separating "is this the right file" from "what is missing from it" is what lets the first be fatal and the second be counted; keeping them in one operation forces both to behave the same way, which is how a document ends up specifying a policy its own execution order forbids.
 - **Affects:** `ARCHITECTURE.md` §7.7 in full; §2.2's step references; §5.3's and §5.4's reachability claims; what the Part 3 session builds.
 - **Falsifiable by:** A structural check that cannot be performed before coercion, which would force a second gate and a superseding entry.
+
+---
+
+## Part 3 implementation session — decisions taken before data access (2026-09-11)
+
+Every entry in this pass was written and committed **before the CSV was fetched**, so
+that each analysis-affecting choice demonstrably predates any data access. The pass
+records the environment actually used, and the implementation calls that
+`ARCHITECTURE.md` leaves under-specified. No `challenge` entry was warranted: nothing
+in the document was found to be wrong, and nothing here deviates from it.
+
+IDs are assigned in write order and are never reserved in advance.
+
+### A-054 — Interpreter patch version and resolved direct dependency versions
+- **Kind:** finding
+- **Part:** project-wide
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Record that Part 3 was built and run on CPython **3.12.14** (`main`, built 2026-08-12, Clang 21.0.0), with direct dependencies resolved to `pandas==3.0.5`, `numpy==2.5.3`, `scipy==1.18.1`, `statsmodels==0.15.0` and `matplotlib==3.11.1`; the fully resolved transitive set is in `requirements.lock.txt`.
+- **Alternatives rejected:** Not applicable — this is an observation. It was obtained by running `platform.python_version()` and `importlib.metadata.version()` inside the project virtual environment immediately after creating it, and by `pip freeze` for the lock file.
+- **Reason:** A-026 requires the initialising session to record the exact patch version it used, because the patch is recorded for provenance rather than enforced; `.python-version` therefore carries the minor version `3.12` only, and a machine with a different 3.12 patch can still reproduce.
+- **Affects:** The run manifest, the clean-checkout sequence, and the bit-identity claim for bootstrap interval endpoints, which is conditional on the `numpy` version recorded here.
+- **Falsifiable by:** Not applicable — this is a record of what was used, not a claim about what must be used.
+
+### A-055 — Python 3.12 is acquired through Homebrew, not through uv
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Obtain the pinned interpreter with `brew install python@3.12` and create the project environment with that interpreter's own `python -m venv .venv`; name Homebrew in the README setup section as the route actually used, while noting that any source of a 3.12 interpreter works.
+- **Alternatives rejected:** `uv python install 3.12` — uv was already present on the build machine and would have been faster and less invasive, but A-027 rejected uv precisely because it adds a tool a reviewer must install before they can reproduce anything, and §7.5's clean-checkout rule makes "create the environment at the pinned interpreter version" step one of the reproduction chain; acquiring the interpreter is therefore inside that chain, so the acquire-versus-manage distinction does not rescue it. Using the machine's existing 3.13.5 or 3.14.7 — §7.7 step 1 hard-stops on any interpreter minor other than 3.12, and A-026 forbids moving the minor without a superseding entry. Pinning the patch version in `.python-version` — A-026 rejected that, since it would fail on a machine carrying a different patch of the same minor for no analytical reason.
+- **Reason:** The reproduction chain should assume as little as possible of the reviewer, and Homebrew is already the conventional macOS route for a versioned interpreter; choosing it keeps the whole chain expressible without introducing a second package tool alongside the venv-plus-pip toolchain A-027 settled on.
+- **Affects:** The README setup section; the clean-checkout sequence; nothing in the analysis.
+- **Falsifiable by:** A reviewer on a platform where Homebrew is unavailable, which changes the documented route but not the pin.
+
+### A-056 — The Kaggle CLI is installed outside the project environment and appears in neither requirements file
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Keep the Kaggle CLI out of `.venv`, out of `requirements.txt` and out of `requirements.lock.txt`; document the CLI fetch in the README as the canonical reproduction step per §5.5, and let a reproducer install that tool however they wish, outside the analysis environment.
+- **Alternatives rejected:** Adding `kaggle` to `requirements.txt` with a new dependency entry — A-027 fixes the permitted Part 3 libraries as `pandas`, `numpy`, `scipy`, `statsmodels` and `matplotlib`, and a fetch tool does not belong in the environment that `requirements.lock.txt` certifies as the analysis environment; it would also make the lock file's transitive closure depend on an HTTP client stack that no analysis step imports. Vendoring a download script into `src/part3_experiment/` — the entrypoint would then have a network path inside it, and §7.7 step 2 is explicit that the run verifies an already-present file rather than fetching one.
+- **Reason:** The lock file is a statement about what produced the numbers. A tool that never runs during the analysis, and whose absence cannot change a single reported figure, weakens that statement by being in it.
+- **Affects:** `requirements.txt`, `requirements.lock.txt`, the README fetch step; nothing in the analysis.
+- **Falsifiable by:** A future step that needs programmatic dataset access during the run itself, which would make the CLI an analysis dependency and require a superseding entry.
+
+### A-057 — `run_part3.py` lives in `src/part3_experiment/`, not at the repository root
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Place the entrypoint at `src/part3_experiment/run_part3.py` and have the root wrapper `run_part3.sh` invoke it as `python -m src.part3_experiment.run_part3`; create no `src/__init__.py`, leaving `src/` an implicit namespace package.
+- **Alternatives rejected:** A root-level `run_part3.py`, which §7.2's phrasing ("plus a single entrypoint `run_part3.py`") could be read to suggest — §8's owned-path list is exhaustive ("It has these paths and no others"), does not include a root `run_part3.py`, and separately forbids "any module outside `src/part3_experiment/`", so a root entrypoint would be outside the session's ownership on two counts. Creating `src/__init__.py` to make `src` a regular package — that file is itself a module outside `src/part3_experiment/` and is forbidden by the same clause; implicit namespace packages make it unnecessary.
+- **Reason:** §7.1's directory tree shows `run_part3.sh` at the root and Part 3's Python under `src/part3_experiment/`, and §8 is the binding statement of what this session may create. Where the two readings of §7.2 diverge, the ownership list governs, and it resolves the question without ambiguity.
+- **Affects:** The invocation path in `run_part3.sh` and the README; where a reviewer looks for the twenty-step order.
+- **Falsifiable by:** An amended §8 listing a root-level entrypoint among the owned paths.
+
+### A-058 — Module set beyond the names illustrated in §7.2
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Implement Part 3 as `config.py`, `run_state.py`, `load.py`, `checks.py`, `srm.py`, `power.py`, `bootstrap.py`, `inference.py`, `engagement.py`, `decision.py`, `report_tables.py`, `figures.py`, `manifest.py`, `verify.py` and the entrypoint `run_part3.py`, all in importable `snake_case` with no numeric prefixes, with execution order living solely in the entrypoint.
+- **Alternatives rejected:** Restricting the set to exactly the six names §7.2 lists (`load`, `checks`, `inference`, `power`, `bootstrap`, `report_tables`) — §7.5 independently requires the single seed literal to live in one module that everything imports, which none of the six names describes, and folding the seed into `load.py` or `inference.py` would bury the one constant the reproducibility claim rests on. Putting the decision pipeline inside `inference.py` — §1.6's three-stage evaluation is the part of this project a reviewer will read most closely, and it deserves a file whose name says what it is. A single flat module containing all twenty steps — it would put execution order in two places, since the order would then be implicit in the file as well as explicit in the entrypoint.
+- **Reason:** §7.2's binding rules are the naming style and the location of execution order, both of which hold here; the list of six names illustrates the style rather than enumerating a closed set, and §8 grants this session all of `src/part3_experiment/**`.
+- **Affects:** The layout of `src/part3_experiment/`; which module a reviewer opens to check a given §7.7 step.
+- **Falsifiable by:** An amended §7.2 stating the six names are exhaustive.
+
+### A-059 — The raw CSV is read with pandas NA filtering disabled
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Read the CSV with `dtype=str`, `na_filter=False` and `keep_default_na=False`, so that every field arrives at the §5.4 token sets as the exact text the file holds, and no value is converted before validation.
+- **Alternatives rejected:** Reading with `dtype=str` alone, which §7.7 step 3's "every column as text, no dtype inference" might be read to permit — pandas still applies its default NA handling in that configuration, converting an empty field and the tokens `NA`, `N/A`, `NaN`, `nan`, `null`, `NULL` and `None` into float `NaN` **before** §5.4's sets ever see them. The missing-set comparison would then run against float objects that are not strings, so the three-state coercion would fail to match its own missing tokens, and the count-conservation assertion at step 9 would be checking a column the reader had already altered. Detecting the converted `NaN` values afterwards and mapping them back to the missing state — it cannot distinguish an empty field from the literal text `NaN`, so the per-spelling source-token counts §5.4 requires would be unrecoverable.
+- **Reason:** This is the same class of silent bug as the truthiness coercion A-024 bans: a default conversion that produces a plausible-looking result while destroying the distinction the validation exists to check. §5.4's enumerated sets are only meaningful if they see the file's actual bytes, which requires the reader's own NA handling to be off.
+- **Affects:** `load.py`; the reachability of §5.3 in practice; the step 9 count-conservation assertion; the per-spelling missing-token counts.
+- **Falsifiable by:** Not applicable — no reading of §7.7 step 3 is served by letting the reader convert values before validation.
+
+### A-060 — Closed containment is the boundary convention for "contains zero"
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Treat an interval as containing zero when `lower <= 0 <= upper`, and as excluding zero otherwise, so that "contains zero" and "excludes zero" are exact complements wherever §1.6 uses them — in precondition R6 and in modifiers R7 through R10.
+- **Alternatives rejected:** Open containment (`lower < 0 < upper`) — an endpoint of exactly zero would then count as excluding zero, which would let a guardrail interval touching zero trigger R8's downgrade or R7's no-op, and would make R10 and the set {R7, R8, R9} overlap rather than partition. Leaving the case unhandled — an endpoint of exactly 0.00 is reachable in a percentile bootstrap, whose endpoints are drawn from the empirical replicate distribution and can land on a value the statistic attains exactly.
+- **Reason:** §1.6 fixes the analogous convention for the action threshold in the direction of inclusion — an endpoint of exactly ±1.00 pp counts as **within** the threshold — and applying the same direction to zero keeps the document's two boundary conventions consistent rather than opposed. It is also the conservative reading: an interval that merely touches zero has not established a sign.
+- **Affects:** `decision.py`; whether R6 fires; which of R7 through R10 applies.
+- **Falsifiable by:** An amendment to §1.6 fixing the opposite convention, which would be defensible but must be stated rather than inferred.
+
+### A-061 — Stage 2 and Stage 3 are evaluated exhaustively under an arity assertion, and the two measure-zero gaps hard-stop
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Evaluate all five Stage 2 conditions and all four Stage 3 conditions independently, collect the labels that fired, and assert that exactly one fired in each stage, hard-stopping otherwise; do **not** add a branch to cover either of the two states the §1.6 tables leave uncovered — `p₇ < 0.05` with `Δ₇` exactly zero, and `CI₁` excluding zero with `Δ₁` exactly zero — and disclose both in the report.
+- **Alternatives rejected:** An `if`/`elif` chain taking the first match — it makes "exactly one branch fired" true by construction, so §7.7 step 20's assertion would verify nothing, and a genuine contradiction between the conditions would be silently absorbed by whichever branch came first. Adding a sixth branch or a fallback to cover the uncovered states — the recommendation for such a state is not pre-registered, so inventing one after reading §1.6 is precisely the after-the-fact rule-making this document exists to prevent, and it would be indistinguishable in the code from a rule that had been pre-registered. Widening R2 or R3 to take `Δ₇ >= 0` — it changes a pre-registered condition to close a gap that cannot occur.
+- **Reason:** The first uncovered state is unreachable in fact, since the z statistic is `Δ / SE` and therefore `Δ = 0` implies `p = 1`; the second requires a percentile interval that excludes zero around a point estimate of exactly zero, which the interval's construction from the replicate distribution makes fantastically unlikely. An assertion that hard-stops is the honest response to a state the pre-registration does not cover: it fails loudly and visibly rather than quietly inventing an answer.
+- **Affects:** `decision.py`; the meaning of §7.7 step 20's assertion; what happens in a state §1.6 does not describe.
+- **Falsifiable by:** A run in which either assertion trips, which would mean the pre-registration has a genuine gap and needs an amendment rather than a patch.
+
+### A-062 — Rules R4 and R5 are selected solely by `CI₇` against ±1.00 pp, with no power-based condition
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Implement the R4 and R5 conditions exactly as §1.6 states them — R4 when `p₇ >= 0.05` and all of `CI₇` lies within ±1.00 pp, R5 when `p₇ >= 0.05` and `CI₇` extends beyond ±1.00 pp on either side — and implement no condition anywhere in the decision pipeline that reads the power calculation; compute and report §3's required comparison sentence between the 80%-power detectable effect and the 1.00 pp action threshold, and let it feed nothing.
+- **Alternatives rejected:** Reading §3's sentence — that a sample able to detect effects smaller than the threshold makes a null result informative so "rule R4 becomes available", otherwise "rule R5 applies" — as a gate on branch selection. It would create a second, independent definition of R4 and R5 that can contradict §1.6's: a sample could be underpowered at 80% while still returning an interval entirely inside ±1.00 pp, and the two readings would then select different branches from the same result, with no stated rule for which governs. It would also make the branch depend on the observed control rate through the power calculation, which is a data-dependent input to a rule §1.6 defines purely on the interval.
+- **Reason:** §1.6 is the mechanical authority for which rule fires and its table names only `p₇` and `CI₇`. §3's sentence is an interpretive claim about *why* a null result is or is not informative — it explains what R4 means, and the explanation happens to be sound, because an interval that fits inside ±1.00 pp is itself evidence the sample was sensitive enough to bound the effect. Reading commentary as a gate would put a second decision rule in the document without the reachability trace §1.6 supplies for the first.
+- **Affects:** `decision.py`; `power.py`, whose output is reported but consumed by nothing; the §3 subsection of the report.
+- **Falsifiable by:** An amendment moving the power condition into §1.6's rule table, where it would need its own boundary conventions and its own reachability trace.
+
+### A-063 — The bootstrap resamples row indices within each arm, and independent streams are spawned from the one seed
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Implement §4.2's stratified scheme literally — for each replicate, draw `n_arm` row indices with replacement from that arm's observed rows and take the mean of the resampled outcome vector — and derive the two metrics' independent streams with `numpy.random.default_rng(RANDOM_SEED).spawn(2)`, introducing no second seed literal anywhere in the repository.
+- **Alternatives rejected:** Drawing each replicate's success count directly from `Binomial(n_arm, p̂_arm)` — this is not an approximation but an exact identity, since the number of successes in a with-replacement resample of size `n` from a 0/1 vector with `k` successes is distributed exactly `Binomial(n, k/n)`, and it would run in a fraction of the time; it was rejected because a reviewer checking that the bootstrap does what §4.2 describes should be able to see the resampling rather than have to verify a distributional argument first, and the runtime saved is worth less than that. Running both metrics off one generator sequentially — the D1 interval would then depend on the D7 bootstrap having run first and with exactly that many draws, so an unrelated change to the primary analysis would silently move the guardrail endpoints. Seeding a second generator with a derived literal such as `RANDOM_SEED + 1` — §7.5 names a second seed literal as a defect and prescribes spawning.
+- **Reason:** §4.2 specifies a resampling scheme, and the most defensible implementation of a specified procedure is the one that looks like the specification. Spawning gives genuinely independent streams whose provenance is still the single seed, which is what makes the bit-identity claim checkable from one constant.
+- **Affects:** `bootstrap.py`; both reported intervals and both Monte Carlo standard errors; the run manifest's seed record.
+- **Falsifiable by:** Not applicable as a correctness matter — the two draw mechanisms have the same sampling distribution, so this is a choice about auditability rather than about the answer.
+
+### A-064 — The step 2 checksum is read from `assumptions.md`, not duplicated in code
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Have §7.7 step 2 parse the recorded SHA-256 out of the dataset-provenance `finding` entry in `assumptions.md` with an anchored pattern keyed to that entry's ID, and hard-stop if the value is absent, malformed, or matched more than once.
+- **Alternatives rejected:** Copying the checksum into `config.py` as a constant — §7.7 step 2 says the file's hash is checked "against the value recorded in `assumptions.md`", and a second copy in code creates two sources of truth for the one value whose whole purpose is to be authoritative; if they ever drifted, the run would verify against the copy while a reader verified against the record. Passing the expected hash in as a command-line argument — it moves the authoritative value out of the repository entirely and makes the clean-checkout sequence depend on the operator typing it correctly. Reading the file's hash and merely printing it — that is not a check.
+- **Reason:** `assumptions.md` is the provenance record a reader is directed to, and a verification step is only meaningful if it reads the same record the reader does. The parse is made strict, and failing loudly on an ambiguous or missing match keeps the brittleness of markdown parsing from degrading into a silently skipped check.
+- **Affects:** `load.py`; the clean-checkout rule's "verify its SHA-256" step; what a reader must edit to point the run at a different revision of the dataset.
+- **Falsifiable by:** A future need to run against several dataset revisions, which would justify a small structured provenance file that `assumptions.md` cites rather than an in-code constant.
+
+### A-065 — Threshold denominators are fixed explicitly
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Compute the unassignable-row threshold and the cross-arm duplicate threshold as a share of the **raw input row count**, and compute the primary-metric missing-value threshold as a share of **each arm's own assignment count** — the arm's share of the SRM denominator — firing the downgrade if either arm exceeds 0.5%.
+- **Alternatives rejected:** Using the raw row count as the denominator for the missing-value threshold as well — §5.3 says "exceed 0.5% of either arm", which is a per-arm statement, and pooling the arms would let a concentrated regression in one arm hide beneath a combined rate roughly half its size. Using each arm's post-exclusion metric denominator — it is smaller than the assignment count by exactly the exclusions being measured, so the rate would be computed against a base the exclusions had already shrunk, which inflates it inconsistently. Using the assignment population for the 0.1% thresholds — §2.2 and §7.7 step 10 both say "of raw rows", and unassignable rows must be counted against a base that includes them, since they are the quantity being thresholded.
+- **Reason:** Each threshold should be measured against the population whose failure it describes: a missing assignment is a failure over all raw rows, and a missing outcome is a failure within the arm it was assigned to.
+- **Affects:** `checks.py`; which of the four downgrade sources can fire; the denominators reported in the data-quality table.
+- **Falsifiable by:** Not applicable — these follow from the wording of §2.2, §5.2 and §5.3 rather than from a preference.
+
+### A-066 — "Identical metric values" is defined for the same-arm duplicate case
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** For §5.2's same-arm duplicate branches, treat two rows sharing a `userid` as having identical metric values when their **coerced** `retention_1`, `retention_7` and `sum_gamerounds` all agree, counting two missing values in the same column as agreeing; any disagreement in any of the three makes the `userid` conflicting, which excludes it entirely from the metric analysis.
+- **Alternatives rejected:** Comparing only the two retention flags and ignoring `sum_gamerounds` — two rows differing in rounds played are different observations of the player, and calling them an export artefact discards the evidence that they are not. Comparing the raw text rather than the coerced values — `True` and `1` are the same outcome under §5.4's token sets, and treating them as conflicting would exclude a user over a spelling difference. Treating two missing values as disagreeing — they carry the same information, and excluding a `userid` from a metric because both of its rows are equally silent about it adds nothing.
+- **Reason:** §5.2's distinction is between a row duplicated by the export and a genuine conflict the data cannot resolve, and the operative question is whether the two rows say the same thing about the player. That question is asked of everything the rows record about the player, and it is asked after coercion, because coercion is what makes two spellings of one value comparable.
+- **Affects:** `checks.py`; the duplicate counts reported by case; the per-metric denominators.
+- **Falsifiable by:** Duplicates turning out not to exist, which makes the branch moot — recorded as a finding either way.
+
+### A-067 — The extreme `sum_gamerounds` row is identified as the maximum, with ties handled explicitly
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Identify §5.1's extreme row as the row holding the **maximum** `sum_gamerounds` value; if that maximum is held by more than one row, treat all tied rows as the excluded set for the "without" variant and report the tie and its count explicitly; disclose the value and its arm in every case.
+- **Alternatives rejected:** Defining the outlier by a rule such as an interquartile-range fence or a z-score cutoff — that is a general outlier-detection policy, which §5.1 does not authorise and which could remove rows the document never contemplated; the section speaks of one specific known observation, not of a class. Hard-coding the expected value from the dataset's reputation — it would fail silently on a different revision of the file and would import an expectation this project has committed to establishing rather than assuming. Assuming the maximum is unique — an unreported tie would make the "without" figure exclude fewer rows than the reader thinks.
+- **Reason:** §5.1 describes a single known extreme value and requires a both-ways presentation of it, so the implementation needs to locate exactly that observation without inventing an exclusion rule that could reach further. The maximum is the only definition that both finds it and cannot expand beyond it.
+- **Affects:** `engagement.py`; the with-and-without `sum_gamerounds` figures; the disclosure §5.1 requires.
+- **Falsifiable by:** The file containing several comparably extreme values rather than one, which would make "the extreme row" the wrong description and require an amendment to §5.1.
+
+### A-068 — Engagement summaries are winsorised at the 99th percentile
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Satisfy §5.1's requirement for "a stated winsorised or trimmed summary" with a mean winsorised at the **99th percentile of the pooled `sum_gamerounds` distribution**, applying that single pooled cap to both arms and reporting the cap value alongside the result.
+- **Alternatives rejected:** Winsorising at each arm's own 99th percentile — the two arms would then be summarised under different caps, so the difference between the reported means would partly reflect the difference between the caps rather than the data. A 95th-percentile cap — it moves far more mass than is needed to address a single extreme observation and would obscure genuine heavy-tail behaviour that §5.1 wants visible. A trimmed mean instead — it discards the tail rather than bounding it, which reports a statistic about a subset of players while presenting it beside statistics about all of them.
+- **Reason:** The summary exists so that no engagement claim rests on one row, and a pooled 99th-percentile cap achieves that while changing as little else as possible; stating the cap is what makes the figure interpretable rather than merely robust.
+- **Affects:** `engagement.py`; the engagement table and the distribution figure; nothing in the retention analysis.
+- **Falsifiable by:** Not applicable as a correctness matter — §5.1 permits a winsorised or a trimmed summary and requires only that the choice be stated.
+
+### A-069 — Output tables carry both a full-precision value and a display-precision rendering
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Give every numeric row in `outputs/tables/` both a `value` column at full precision, written with a fixed deterministic format, and a `value_display` column rendered at §4.1's reporting precision — two decimal places in percentage points for rates and effects, three significant figures for p-values — and require the report and README to quote the `value_display` string.
+- **Alternatives rejected:** Storing only the rounded value — the decision rule compares a `CI₇` endpoint against 1.00 pp, and a rounded endpoint could cross that boundary in either direction, so the rule would be evaluated against a display artefact rather than the estimate. Storing only the full-precision value — §7.5 requires every number in prose to exist in a generated output file, and a figure rounded in the prose does not literally appear anywhere, so the check a reader would perform against the table would fail on the last digit. Rounding at write time and computing the decision from in-memory values — the committed table would then disagree with the computation it documents.
+- **Reason:** The two requirements pull in opposite directions: the decision needs unrounded inputs and the reproducibility rule needs the printed figure to be findable in a file. Carrying both columns satisfies each without letting either corrupt the other.
+- **Affects:** `report_tables.py`; every table under `outputs/tables/`; what the report and README are permitted to quote.
+- **Falsifiable by:** Not applicable.
+
+### A-070 — Step 20's hard stop occurs after outputs exist, and those outputs are never committed
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Implement §7.7 step 20 as a raising hard stop whose exception states that the files on disk are the product of a failed run and must not be committed, and commit no output from any run whose step 20 did not pass.
+- **Alternatives rejected:** Downgrading a step 20 failure to a warning so that the "no outputs are written" half of the hard-stop definition holds literally — a self-verification check that does not stop the run verifies nothing, and this is the step that asserts exactly one Stage 2 branch fired. Writing outputs to a staging directory and promoting them only after step 20 passes — it would satisfy the definition exactly, but it adds a path indirection to every write for a failure mode that is a bug rather than a data condition, and §7.7 step 19 names the final paths directly. Moving self-verification before the write — it cannot re-read written outputs, which is the substance of what step 20 does.
+- **Reason:** §7.7's failure-class definition says a hard stop writes no outputs, and step 20 necessarily runs after step 19 has written them, so the definition cannot hold there on its own terms. The document scopes the invariant itself in the sentence that follows the step list — "steps 1–6 and the assertion group at step 9 are the only places the run can terminate **on the data**" — which makes step 20 a stop on the code's own consistency rather than on the input. The intent is unambiguous; only the label is imprecise, and the operational consequence is carried by the commit discipline recorded here.
+- **Affects:** `verify.py`; `run_part3.sh`'s exit status; which runs produce committed artefacts.
+- **Falsifiable by:** Not applicable — this records how an acknowledged imprecision in the failure-class label is resolved, not a choice between substantive alternatives.

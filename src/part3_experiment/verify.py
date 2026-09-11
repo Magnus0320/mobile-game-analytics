@@ -70,6 +70,21 @@ def self_verify(*, state: RunState, decision, primary: dict, guardrail: dict,
                      f"reported successes for {key} disagree with the population")
     checks.append("every reported denominator equals its recorded row count")
 
+    # --- the recorded data-row count equals the raw row count pandas saw ------
+    recorded = state.denominators.get("recorded_row_count")
+    raw_rows = state.denominators.get("raw_rows")
+    _require(recorded is not None and raw_rows is not None,
+             "the recorded and raw row counts were not both registered")
+    _require(
+        recorded == raw_rows,
+        f"assumptions.md {config.PROVENANCE_ENTRY_ID} records {recorded} data rows "
+        f"but the loaded frame has {raw_rows}. Both counts exclude the header row "
+        "(A-072). The checksum matched, so the file is the right file and the "
+        "RECORD is wrong; fix the entry by appending a correction rather than "
+        "editing it, since assumptions.md is append-only.",
+    )
+    checks.append(f"recorded data-row count equals the loaded row count ({raw_rows})")
+
     # --- the SRM denominator is the assignment population, not a cleaned one
     srm_table = _kv(config.TABLES_DIR / "part3_02_srm.csv")
     _require(int(srm_table["srm_n"]) == srm["n"], "SRM n was not written faithfully")

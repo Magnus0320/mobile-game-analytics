@@ -91,6 +91,12 @@ def verify_input(state: RunState, csv_path: Path = config.RAW_CSV_PATH) -> dict:
             "precisely what this check exists to catch. Do not proceed."
         )
 
+    # Recorded as a denominator so §7.7 step 20 asserts it equals the raw row
+    # count pandas actually sees. The provenance figure and the computed figure
+    # therefore cannot disagree by one and send a reader hunting for a phantom
+    # off-by-one: A-072 states the counting convention, and this enforces it.
+    state.record_denominator("recorded_row_count", recorded_rows)
+
     state.finding(
         step=2,
         finding_id="input.checksum_verified",
@@ -151,6 +157,20 @@ def check_columns(df: pd.DataFrame, state: RunState) -> None:
         description="Raw row count and column set recorded.",
         values={"raw_rows": n_raw, "columns": list(df.columns)},
     )
+
+    recorded = state.denominators.get("recorded_row_count")
+    if recorded is not None:
+        state.finding(
+            step=4,
+            finding_id="input.row_count_vs_record",
+            description=(
+                "Raw row count pandas sees, compared against the data-row count "
+                f"recorded in assumptions.md {config.PROVENANCE_ENTRY_ID}. Both "
+                "exclude the header row. Step 20 asserts they are equal."
+            ),
+            values={"recorded": recorded, "observed": n_raw,
+                    "agree": bool(recorded == n_raw)},
+        )
 
     if n_raw != config.DOCUMENTED_ROW_COUNT:
         state.finding(

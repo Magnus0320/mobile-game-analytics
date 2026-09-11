@@ -106,7 +106,8 @@ token before coercion.
 | `gate_30` (control) | 44,700 |
 | `gate_40` (variant) | 45,489 |
 | Expected under 1:1 | 45,094.5 per arm |
-| Excess in the variant arm | 789 rows |
+| Gap between the two arm counts | 789 rows (`gate_40` − `gate_30`) |
+| Departure of each arm from expectation | 394.5 rows, i.e. half the gap |
 | Observed control share | 0.495626 |
 | **Two-sided exact binomial p** | **0.00869** |
 | Chi-square goodness-of-fit (1 df) | 6.9024, p = 0.00861 |
@@ -144,8 +145,8 @@ test trips, because its truth does not depend on the outcome.
 
 What the check does **not** establish is that assignment was balanced. It
 establishes only that the observed imbalance is not extreme enough to trip an
-alarm calibrated for gross failures. The 789-row excess is carried forward to
-§7.3 as an unverifiable property, because this dataset contains no
+alarm calibrated for gross failures. The 789-row gap between the arms is carried
+forward to §7.3 as an unverifiable property, because this dataset contains no
 pre-treatment covariates and no further diagnosis of it is possible.
 
 ---
@@ -286,14 +287,25 @@ clear the threshold is no reason to make the change either. The threshold test
 and the rule that actually fired agree on "keep", so the recommendation does not
 depend on which of the two a reader consults.
 
-**Two standard errors, deliberately.** The p-value uses the pooled
-(common-proportion) standard error, 0.2592 pp, because under the null the two
-arms share a single proportion and that is the correct null variance. The
-interval uses the unpooled (Wald) standard error, 0.2592 pp, because estimating
-the size of a difference is a different problem from testing whether it is zero,
-and under the alternative the arms do not share a proportion. The two agree to
-four decimal places here by arithmetic accident — they are 0.259177 and 0.259201
-— not because one was reused for both. No continuity correction is applied.
+**Two standard errors, deliberately.** Two different standard errors are used
+above, and at this dataset's rates they happen to coincide to four decimal
+places — both round to 0.2592 pp. That is an arithmetic accident, not a sign
+that one was reused for both, so they are quoted here at the precision that
+separates them:
+
+| Standard error | Value | Used for |
+|---|---|---|
+| Pooled (common-proportion) | **0.259177 pp** | the p-value, and nothing else |
+| Unpooled (Wald) | **0.259201 pp** | the confidence interval, and nothing else |
+
+The pooled form is correct for the test because under the null the two arms
+share a single proportion, so that is the null variance. The unpooled form is
+correct for the interval because estimating the size of a difference is a
+different problem from testing whether it is zero, and under the alternative the
+arms do not share a proportion. No continuity correction is applied: with tens of
+thousands of observations per cell it would move the p-value by an amount
+invisible at reported precision, while making the test inconsistent with the
+uncorrected interval printed beside it.
 
 ### 6.3 The two instruments agree
 
@@ -409,7 +421,7 @@ claim should be read before the claim.
 
 ### 7.3 Confounds and unverifiable properties that remain
 
-- **The 789-row arm imbalance is not explained, only tolerated.** The SRM check
+- **The 789-row gap between the arms is not explained, only tolerated.** The SRM check
   did not trip, and that is not the same as establishing that assignment was
   balanced. The observed split is 49.56 / 50.44 against an assumed 50 / 50, and
   whether that excess is chance or a mechanism cannot be determined here.
@@ -513,9 +525,13 @@ that every reported denominator equals the row count recorded for it, that
 exactly one Stage 2 branch fired, and that the recorded recommendation is the one
 the decision pipeline produces from the same inputs.
 
-**Reproducibility guarantee, stated at the strength it actually holds.** Every
-file in `outputs/tables/` and `outputs/run_manifest.json` reproduces
-byte-for-byte on any machine, the manifest's run timestamp excepted. Figures are
+**Reproducibility, separating design intent from verified result.** Every file in
+`outputs/tables/` and `outputs/run_manifest.json` is written for cross-machine
+byte-identity — fixed column order, explicit float formatting, sorted JSON keys,
+no locale, path or timestamp leakage, the manifest's run timestamp excepted. What
+has been verified is that re-running on the same machine with the same lock file
+reproduces every table and every PNG byte-identically; cross-machine identity
+follows from how the files are written but has not been confirmed here. Figures are
 **not** byte-identical across machines — matplotlib does not produce identical
 PNGs across versions, platforms and font configurations, and claiming otherwise
 would be falsified by the first re-run elsewhere. What holds for figures is that

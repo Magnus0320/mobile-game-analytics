@@ -190,7 +190,7 @@
     },
     {
       "path": "outputs/tables/part3_02_srm.csv",
-      "sha256": "d161ec89d23368bfa339b0689f8fd60ac3370eb654eb199f67245e88f7e892bf"
+      "sha256": "6213174f9cf6263ea50f5b2f6e50200105eb5457e2a61f2175d89723e810cc9c"
     },
     {
       "path": "outputs/tables/part3_03_power.csv",
@@ -206,7 +206,7 @@
     },
     {
       "path": "outputs/tables/part3_06_primary_inference.csv",
-      "sha256": "0fad0d4c2b2ec9545a12889502d1d0bcd50c1a8bf217d9177e6a366fa4abcdbe"
+      "sha256": "a7cabc6e426fece3a01abdbc9aced8e2e91a213cc66ff935f5a56c6676a4b7b5"
     },
     {
       "path": "outputs/tables/part3_07_guardrail_inference.csv",
@@ -241,5 +241,5 @@
     "assumptions_file_sha256": "b0cd9e0ed8d6783806add082acf15e59bc30d2a8d6f76f1fe59f14f3b5ce61a8",
     "note": "The Part 3 report cites the architecture commit. The file hashes let a reader confirm the document was not altered after that commit without needing the repository."
   },
-  "run_timestamp_utc": "2026-09-11T04:13:33+00:00"
+  "run_timestamp_utc": "2026-09-11T08:34:02+00:00"
 }

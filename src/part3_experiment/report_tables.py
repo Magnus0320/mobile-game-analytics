@@ -55,6 +55,12 @@ def display(value: Any, unit: str) -> str:
         return f"{float(value):.6f}"
     if unit == "share":
         return f"{float(value) * 100:.4f}%"
+    if unit == "se":
+        # Six decimals, because the pooled and unpooled standard errors coincide
+        # to four here by arithmetic accident and the report argues they are
+        # distinct quantities. A display that hides the difference would make
+        # that argument uncheckable against the file.
+        return f"{float(value):.6f}"
     if unit == "statistic":
         return f"{float(value):.4f}"
     return _fmt_full(value)
@@ -146,7 +152,13 @@ def write_all(*, raw_rows: int, provenance: dict, unassignable: int,
         kv("expected_per_arm", srm["expected_per_arm"], "statistic",
            "Under the hypothesised 1:1 allocation (A-008)."),
         kv("observed_control_share", srm["observed_control_share"], "proportion", ""),
-        kv("imbalance_rows", srm["imbalance_rows"], "count", "control minus variant"),
+        kv("imbalance_rows", srm["imbalance_rows"], "count",
+           "Difference BETWEEN ARMS: control minus variant."),
+        kv("arm_gap_rows", abs(srm["imbalance_rows"]), "count",
+           "Size of the gap between the two arm counts."),
+        kv("excess_over_expectation_rows",
+           abs(srm["variant_count"] - srm["expected_per_arm"]), "statistic",
+           "Departure of EACH arm from the expected 1:1 count; half the arm gap."),
         kv("exact_binomial_p", srm["exact_binomial_p"], "p",
            "PRIMARY SRM test: two-sided exact binomial against p=0.5 (A-010)."),
         kv("chi2_statistic", srm["chi2_statistic"], "statistic",
@@ -213,9 +225,9 @@ def write_all(*, raw_rows: int, provenance: dict, unassignable: int,
            "The confirmatory instrument; alpha was pre-registered against it."),
         kv("alpha", config.ALPHA, "proportion", "§1.3, all of it on this one test."),
         kv("significant", primary["significant"], "text", ""),
-        kv("se_pooled_pp", primary["se_pooled_pp"], "statistic",
+        kv("se_pooled_pp", primary["se_pooled_pp"], "se",
            "Null variance: used for the TEST only (§4.1, A-015)."),
-        kv("se_unpooled_pp", primary["se_unpooled_pp"], "statistic",
+        kv("se_unpooled_pp", primary["se_unpooled_pp"], "se",
            "Used for the INTERVAL only. The asymmetry is deliberate, not a bug."),
         kv("analytic_ci_low_pp", primary["analytic_ci_low_pp"], "pp", "Unpooled Wald."),
         kv("analytic_ci_high_pp", primary["analytic_ci_high_pp"], "pp", "Unpooled Wald."),

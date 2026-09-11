@@ -47,10 +47,20 @@ alternatives considered and why each lost. It is never edited, only added to.
 From a clean checkout, this sequence reproduces every number, table and figure:
 
 ```bash
-brew install python@3.12                    # any source of a 3.12 interpreter works
-/opt/homebrew/bin/python3.12 -m venv .venv
+# Any source of a CPython 3.12 interpreter works — pyenv, python.org, a distro
+# package. Homebrew is what this project was built with:
+brew install python@3.12
+
+python3.12 -m venv .venv    # or "$(brew --prefix python@3.12)/bin/python3.12"
 ./.venv/bin/python -m pip install -r requirements.lock.txt
+./.venv/bin/python --version   # expect 3.12.x
 ```
+
+If `python3.12` is not on your `PATH` after installing, invoke it by full path.
+On Apple Silicon that is `/opt/homebrew/bin/python3.12`; on Intel macOS it is
+`/usr/local/bin/python3.12`. The minor version is what matters — the run stops if
+it is not 3.12 — and the exact patch version used to produce these outputs is
+recorded in `assumptions.md` A-054.
 
 Fetch the dataset into `data/raw/`. It is not committed — redistributing a Kaggle
 dataset is not ours to grant — so `data/raw/` is git-ignored and the file's
@@ -78,10 +88,22 @@ every reported denominator equals the row count recorded for it, that exactly on
 decision branch fired, and that the recorded recommendation is the one the rule
 produces from the same inputs.
 
-Tables and the run manifest reproduce byte-for-byte on any machine. Figures do
-not — matplotlib does not produce identical PNGs across platforms and font
-configurations — but every figure is generated from a committed table, so the
-numbers behind it reproduce exactly even when the pixels do not.
+On reproducibility, separating what was built for from what has been checked.
+The tables and the run manifest are **built for** cross-machine byte-identity:
+fixed column order, explicit float formatting, `\n` line terminators, sorted JSON
+keys, and no locale, path or timestamp leakage, the manifest's run timestamp
+excepted. What has actually been **verified** is narrower — re-running on this
+machine with this lock file reproduces every table and every PNG byte-identically.
+Whether the tables are byte-identical on a different machine is a reasonable
+expectation from the way they are written, not a result anyone has confirmed, and
+it is stated here as the former.
+
+Figures are a separate case and a weaker guarantee on purpose: matplotlib does not
+produce identical PNGs across versions, platforms and font configurations, so
+cross-machine pixel identity is not claimed at all. What holds instead is that
+every figure is generated from a committed table, so the numbers and labels behind
+it reproduce exactly even where the pixels do not, and no figure is ever the sole
+record of a value.
 
 ### Repository layout
 

@@ -4,8 +4,8 @@ z_statistic,-3.16435891275,-3.1644,statistic,"Pooled-variance, two-sided, no con
 p_value,0.00155424997561,0.00155,p,The confirmatory instrument; alpha was pre-registered against it.
 alpha,0.05,0.050000,proportion,"§1.3, all of it on this one test."
 significant,true,True,text,
-se_pooled_pp,0.259177246998,0.2592,statistic,"Null variance: used for the TEST only (§4.1, A-015)."
-se_unpooled_pp,0.259201400829,0.2592,statistic,"Used for the INTERVAL only. The asymmetry is deliberate, not a bug."
+se_pooled_pp,0.259177246998,0.259177,se,"Null variance: used for the TEST only (§4.1, A-015)."
+se_unpooled_pp,0.259201400829,0.259201,se,"Used for the INTERVAL only. The asymmetry is deliberate, not a bug."
 analytic_ci_low_pp,-1.32815524189,-1.33,pp,Unpooled Wald.
 analytic_ci_high_pp,-0.312104421153,-0.31,pp,Unpooled Wald.
 bootstrap_ci_low_pp,-1.33580845048,-1.34,pp,CI7: the estimation instrument; decides the action-threshold condition.

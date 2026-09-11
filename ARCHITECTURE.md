@@ -1,9 +1,10 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.2, design-time. Written 2026-09-10, before any data was loaded, any
-query was run, and any statistic was computed. Amended the same day to v1.1 and then
-v1.2 — still before any data access and before the repository was initialised. §11
-records what changed in each.
+**Status:** v1.4. §1–§6 are Part 3's pre-registration and are **frozen** as of
+commit `c6d72f83` (v1.2), which predates Part 3's first `src/` commit; Part 3 is
+complete and its report cites that commit. Neither v1.3 nor v1.4 changes anything
+inside §1–§6 — both specify the Parts 1 and 2 recon pass and nothing else. §11
+records what changed in each version.
 
 **Purpose.** This document fixes the decisions that must not be made after seeing
 results. Implementation sessions read it and follow it. They do not edit it.
@@ -934,13 +935,25 @@ listing. Reserved ranges:
 
 | Range | Reserved for |
 |---|---|
-| `01`–`29` | Part 1 — retention and install cohorts |
+| `00`–`09` | **Dataset recon** (§10.1) — the queries that establish the facts Parts 1 and 2 are specified from |
+| `10`–`29` | Part 1 — retention and install cohorts |
 | `30`–`59` | Part 2 — funnel and monetization |
 | `60`–`89` | Shared or derived tables used by both |
 | `90`–`99` | QA / validation queries (row counts, dedupe checks, date-range sanity) |
 
 Ranges leave gaps on purpose: inserting a query later must not force a renumber, and
 a renumber would break every reference in the reports.
+
+Two notes on the recon range, added in v1.3. It sits **ahead of** Part 1's range
+because the numbering encodes execution order and recon runs before anything else;
+Part 1 was narrowed from `01`–`29` to `10`–`29` to make room, which costs nothing
+because no Part 1 SQL exists yet. And recon is **not** filed under `90`–`99`: QA
+queries validate build queries written against a specification, while recon
+establishes the facts the specification does not yet have — a directory listing
+should distinguish "this checked a query" from "this is why the spec says what it
+says". The ten-slot ceiling is also deliberate. Recon is meant to be a handful of
+broad queries; if it needs more than ten, it is no longer cheap and bounded, and
+that is a signal to re-scope rather than a limit to work around.
 
 **Python.** Modules get importable `snake_case` names with **no numeric prefixes**:
 `load.py`, `checks.py`, `inference.py`, `power.py`, `bootstrap.py`,
@@ -1177,8 +1190,12 @@ run that reaches step 19 has already established that the file is the file.
 
 ## 8. Path ownership
 
-One Claude Code session builds Part 3. It has these paths and no others, so that
-later sessions for Parts 1 and 2 can be added without collision.
+Every session owns an explicit path list and touches nothing outside it, so that
+sessions can be added without collision. Two are defined so far: the **Part 3
+session**, now complete, and the **recon session**, which runs next. The Part 1 and
+Part 2 build sessions get their lists in the version that §10.4's handover
+produces — they are deliberately not defined here, because their paths depend on
+what recon finds.
 
 **The Part 3 session owns (may create and modify):**
 
@@ -1213,17 +1230,57 @@ later sessions for Parts 1 and 2 can be added without collision.
 - Existing git history. Commits touch only the paths listed above; no rebases,
   amends, or force-pushes of other sessions' commits.
 
+**The recon session owns (may create and modify):**
+
+- `sql/00_recon_*.sql` through `sql/09_recon_*.sql` — the recon queries (§7.2)
+- `src/recon/**` — the query runner and the dry-run budget checker, nothing else
+- `outputs/tables/recon_*.csv` — the raw query results
+- `reports/recon_ga4_sample.md` — the recon findings document
+- `README.md` — a `## Dataset recon` section only
+- `requirements.txt`, `requirements.lock.txt`, `.gitignore` — **append only**, for
+  the BigQuery client dependency and for credential-file ignore patterns. No
+  existing pin may be changed or removed without an `assumptions.md` entry.
+- `assumptions.md` — **append only**, as for every session
+- BigQuery access configuration: it is the **only** session permitted to touch
+  this, and it does so under two absolute rules — authentication is by user
+  application-default credentials, and **no service-account key, token, or
+  credential file of any kind is ever written into the repository**. The destination
+  project id lives in an environment variable documented in the README, never
+  hardcoded in a query or a module.
+
+**The recon session must not touch:**
+
+- `ARCHITECTURE.md` — read-only, as for every session. A disagreement is an
+  `assumptions.md` `challenge` entry relayed to the architecture session.
+- **Anything belonging to Part 3.** `src/part3_experiment/**`, `reports/part3_*`,
+  `outputs/*part3_*`, `outputs/run_manifest.json`, `run_part3.sh`, the README's
+  three-sentence opener and its `## Part 3` section, and `data/**`. Part 3 is
+  complete, committed, and cites a frozen pre-registration; nothing may perturb it.
+- `sql/10`–`sql/99` — every range outside `00`–`09`
+- `src/part1_*`, `src/part2_*`, `reports/part1_*`, `reports/part2_*`, and the
+  README's `## Part 1` and `## Part 2` placeholder headings
+- Any output file whose name does not begin `recon_`
+- Existing `assumptions.md` entries, and existing git history
+
+**And the gate, which is a prohibition on content rather than on paths:** the recon
+session may not write a **metric definition, cohort definition, funnel step, day
+boundary, or retention window** — not in SQL, not in Python, not in the findings
+document, not as a comment, a placeholder, a draft, or a "suggested" section. It
+establishes facts and stops (§10.4). If it believes a definition follows obviously
+from what it found, that belief is an `assumptions.md` `challenge` entry, not code.
+
 **Cross-session rules:** no session deletes or overwrites another session's outputs.
 No session edits another session's report. `assumptions.md` is append-only for
 everyone, forever.
 
 ---
 
-## 9. Open questions — all resolved 2026-09-10
+## 9. Open questions
 
-All six questions raised in v1.0 are closed. Nothing in this section is outstanding;
-it is kept as the record of what was decided and on what basis. Each resolution is
-recorded in `assumptions.md` (A-046, plus the entries named below).
+The six questions raised in v1.0 are all closed, and are kept below as the record of
+what was decided and on what basis; each resolution is recorded in `assumptions.md`
+(A-046, plus the entries named below). **Question 7, added in v1.3, is open** — with
+a stated default, so nothing is blocked on it.
 
 1. **Which arm is the incumbent? — CLOSED, confirmed.** The Kaggle dataset card
    states directly that `gate_30` is the control group and `gate_40` is the group
@@ -1249,6 +1306,18 @@ recorded in `assumptions.md` (A-046, plus the entries named below).
    game version are stated as unknown; no attempt is made to date the experiment
    from external sources, and speculation about it is out of scope.
 
+7. **Do byte-identity rules apply to outputs derived from BigQuery? — OPEN, with a
+   stated default.** Raised by v1.3. §7.5 requires committed tables to reproduce
+   byte-identically from a clean checkout, which works for Part 3 because its input
+   is a local CSV verified by checksum. Recon and, later, Part 1 and Part 2 outputs
+   come from an external table that no checksum covers. Default assumed (A-080):
+   those outputs are **exempt** from cross-machine byte-identity and instead carry a
+   provenance line — shard range covered, query job date, dry-run byte estimate, and
+   row count — while §7.5's rule stays fully in force for Part 3. Tightening this
+   would mean materialising a fixed extract and checksumming it, which is a real
+   option and interacts with recon item 12; it is left open rather than decided
+   before the byte figures exist.
+
 **If a later part raises a new question**, it is added here with a stated default so
 that work is never blocked on an answer, and recorded in `assumptions.md` the same
 way.
@@ -1264,68 +1333,371 @@ guesswork dressed as design. A pre-registration that turns out to describe colum
 that do not exist is worse than no pre-registration, because it teaches the reader
 to distrust the ones that are real.
 
-A recon pass runs first — cheap, bounded, schema-and-counts only, its findings
-appended to `assumptions.md` and relayed here — and only then are Parts 1 and 2
-specified with the same rigour as §1–§6.
+A recon pass runs first — cheap, bounded, schema-and-counts only — and only then are
+Parts 1 and 2 specified with the same rigour as §1–§6. v1.3 specifies that pass:
+who runs it (§10.1), what it must establish (§10.2), the one scope decision it
+settles by rule (§10.3), and where it stops (§10.4). It specifies **no** Part 1 or
+Part 2 metric, cohort, funnel step or day boundary, and neither may anything else
+until §10.4's handover has happened.
 
-**What must be established before Part 1 (retention and install cohorts) can be
-specified:**
+### 10.1 The recon pass — owner, budget and output
 
-1. The actual date-shard range of `events_*`: first and last suffix present, and
-   whether the range is contiguous or has gaps. This determines the fixed date
-   window, which every cohort definition depends on.
-2. Whether `first_open` exists for every user appearing in the window, and how many
-   users have events but no `first_open`. That population size decides whether
-   "users with no install event" is a footnote or a structural problem.
-3. The timezone semantics of `event_timestamp`, and the relationship between
-   `user_first_touch_timestamp` and `first_open` — which one is authoritative for
-   install day, and whether day boundaries are UTC or property-local. D1/D7/D30 are
-   defined by day boundaries, so this cannot be guessed.
-4. Whether `user_id` is populated at all or whether `user_pseudo_id` is the only
-   identifier, which decides whether cross-device deduplication is even possible and
-   therefore what "a player" means.
-5. Whether the retention denominators should be install cohorts by day or by week,
-   which depends on daily install volume in the window — a day cohort with too few
-   installs produces retention curves that are all noise.
-6. Session semantics: whether `ga_session_id` is populated and reliable, and what
-   engagement fields exist, since "returned on day 7" needs an operational
-   definition.
-7. Platform mix (iOS / Android / web) and whether the "mobile game" framing holds
-   for all rows, or whether a platform filter is part of the population definition.
-8. Known duplicate-event behaviour in the sample, and whether de-duplication is
-   required before any count is trusted.
+**Owner: a dedicated recon session**, listed in §8, separate from both the completed
+Part 3 session and the future Part 1 and Part 2 build sessions. The reason it is not
+simply given to the Part 1 session is structural rather than tidy-minded: a session
+that has just seen the shard ranges, null rates and event volumes, and is then asked
+to write metric definitions, is a session choosing definitions with the answers in
+front of it. Separating the two makes the handover through the architecture session
+(§10.4) mandatory instead of a matter of discipline — the same reasoning that keeps
+`ARCHITECTURE.md` read-only to implementation sessions (§8).
+
+**Recon SQL is committed**, in the `00`–`09` range reserved for it in §7.2. The
+recon's findings become the factual basis for two-thirds of the project's
+specification, and a fact whose query nobody can read is an assertion. Filing it
+under `90`–`99` was rejected — see the note in §7.2.
+
+**Budget rule.** The BigQuery sandbox allows 1 TiB of query processing per month with
+no payment method attached, and the project must stay re-runnable at zero cost
+(§7.5). Therefore:
+
+- **Per-query ceiling: 50 GiB.** Checked against the dry-run estimate before the
+  query runs, and against the **actual bytes billed** after it runs.
+- **Total recon ceiling: 200 GiB** across the entire recon pass, **counted in actual
+  bytes billed** (see the reconciliation rule below).
+- 200 GiB is a fifth of the monthly allowance, leaving the rest for the Part 1 and
+  Part 2 build queries and at least one full re-run. Both ceilings are deliberately
+  loose relative to what a schema-and-counts pass on this sample should need, which
+  is the point: a query that trips one is almost certainly wrong — an unfiltered
+  shard range, a `SELECT *` against a nested column, an accidental cross join —
+  rather than a legitimately expensive question.
+- **Every query is dry-run first.** The estimate is recorded before the query is
+  executed, and the query runs only if the estimate is within the per-query ceiling
+  *and* within the remaining total. The estimate is the only number available before
+  execution, so it is what the pre-flight gate uses — and it is used for nothing
+  else.
+- **Reconciliation: the running total is kept in actual bytes billed, not in
+  estimates.** After each query executes, the **actual bytes billed** and bytes
+  processed are read from the job statistics and recorded in the recon results file
+  alongside the estimate, together with the divergence — billed minus estimated, as
+  an absolute figure and as a ratio. The running total accumulates the actuals. The
+  reason the two cannot be assumed equal: BigQuery bills a minimum per table
+  referenced regardless of the estimate, which for a wildcard query touching many
+  shards can dominate a cheap query's cost outright; and for wildcard queries
+  filtered on `_TABLE_SUFFIX`, what a dry run predicts and what execution bills can
+  diverge depending on how shard pruning actually resolves. A pass that tracked only
+  estimates could believe it had spent 180 GiB while the account recorded materially
+  more — or materially less.
+- **Every divergence is a finding, in both directions, on every query.** Not only
+  large ones. The divergence is direct evidence about how the wildcard filter is
+  being planned, which is the cost model item 12 has to produce, so under-billing
+  matters as much as over-billing: if execution prunes shards better than the dry run
+  predicts, a per-day cost model built on estimates overstates the Part 1 and Part 2
+  build cost and could force a materialised extract that is not actually needed.
+- **Halt rule.** The pass **stops** if either of these fires:
+  - a single query's **billed** bytes exceed its dry-run estimate by more than
+    **2×** *and* by more than **10 GiB** in absolute terms — both conditions
+    required, so that the per-table minimum inflating a trivially small query does
+    not halt anything; or
+  - a single query's **billed** bytes exceed the **50 GiB** per-query ceiling,
+    whatever it was estimated at.
+
+  A halt is not a finding to note and move past. The pre-flight gate is the only cost
+  control the pass has, and it is estimate-based; once the estimate is demonstrably
+  not predictive at that magnitude, every subsequent gate decision is unreliable, and
+  continuing means spending an unknown amount on the strength of a number already
+  known to be wrong. The cost of halting is small — recon is at most ten queries —
+  and the recovery is to record the divergence and what it implies about the planner
+  as a finding, then escalate to the architecture session, which either re-scopes the
+  remaining items or re-specifies the queries so their cost is predictable (for
+  example against an explicit shard list rather than a suffix predicate). Continuing
+  and hoping, and raising a ceiling to accommodate the overrun, are both forbidden.
+  A divergence in the **under**-billing direction never halts the pass: it is
+  recorded, it changes item 12's conclusion, and it costs nothing.
+- **Shard inventory comes from table metadata, not from scanning rows** — item 1
+  costs no query bytes and must not be answered with a row scan.
+- Every query against `events_*` restricts the shard range explicitly and selects
+  only the columns it needs. A query that reads a column no item asks about is a
+  defect regardless of what it costs.
+- **If a planned query exceeds a ceiling it is not run.** It is narrowed — a shorter
+  shard range, fewer columns, aggregation pushed earlier, or a single-shard sample —
+  and dry-run again. If it still exceeds after narrowing, the item is recorded as
+  **unanswered**, with the reason and the estimate, and escalated to the
+  architecture session, which either re-scopes the item or accepts the unknown and
+  writes it into Parts 1 and 2 as a stated limitation. Raising a ceiling, enabling
+  billing, or running a query whose estimate was never taken are all forbidden.
+- **If the remaining total — in actuals — falls below 50 GiB, recon stops** and
+  reports what it has, rather than running a partial query set.
+
+**Output artifacts — all three, with an explicit precedence:**
+
+| Artifact | Role |
+|---|---|
+| `outputs/tables/recon_*.csv` | The raw query results. **Source of truth for every number.** |
+| `reports/recon_ga4_sample.md` | The checklist rendered for a human: one row per item, with the question, the artefact, the observed value, a verdict of *answered* / *problematic* / *unanswered*, the query file, and both the dry-run estimate and the actual bytes billed. A rendering, not an authority. |
+| `assumptions.md` `finding` entries | One per item whose answer a later decision rests on. **Source of truth for the interpretation** — what the number means for the specification — but never for the number itself. |
+
+Where the report or a finding entry disagrees with the CSV, **the CSV wins and the
+discrepancy is a defect.** The split exists because `assumptions.md` is append-only
+prose that cannot be regenerated, so it must not be the authority for a figure a
+re-run could change; and because the interpretation is a judgement that belongs in
+the append-only record rather than in a regenerated file.
+
+Each recon result file carries a **provenance line** — shard range covered, query job
+date, dry-run estimate, **actual bytes billed**, and row count — because its source
+is an external table rather than a checksummed local file. Both byte figures are
+carried, not just one: the estimate is what authorised the query and the billed
+figure is what it cost, and a reader who can see only one cannot tell whether the
+budget was tracked correctly. Whether that replaces or merely supplements §7.5's
+byte-identity rule for BigQuery-derived outputs is §9's open question 7.
+
+### 10.2 The recon checklist
+
+Thirteen items. Each states the **question**, the **artefact** that answers it — a
+count, a min/max, a distinct list, a null rate — and what a **problematic answer**
+would be. An item a reader cannot tell has been answered is not a recon item, so
+every item resolves to *answered*, *problematic* or *unanswered* in the findings
+document, with its artefact attached.
+
+**Before Part 1 (retention and install cohorts) can be specified:**
+
+1. **Shard range.** *Question:* what is the actual `events_*` suffix range, and is
+   it contiguous? *Artefact:* the min and max suffix, the total shard count, and the
+   list of missing dates between them — taken from **table metadata, not a row
+   scan**, at no query-byte cost. *Problematic:* gaps inside the range; fewer than
+   30 shards, which cannot support a D30 cohort; or a range that does not cover
+   whole weeks, which forces a choice between a ragged window and discarding data.
+2. **`first_open` coverage.** *Question:* does every user in the window have a
+   `first_open`, and how many have events but none? *Artefact:* distinct user count,
+   distinct users with at least one `first_open`, and the difference as both a count
+   and a share. *Problematic:* more than **5%** of users without a `first_open` —
+   that population then needs a stated treatment before any install-cohort
+   definition exists, and it is the deferred "users with no install event" question.
+3. **Timestamp and timezone semantics.** *Question:* what unit and zone is
+   `event_timestamp` in, how does `user_first_touch_timestamp` relate to the
+   `first_open` event's own timestamp, and is a property-local day boundary
+   available at all? *Artefact:* confirmation of the unit; the distribution of the
+   difference between the two timestamps for users who have a `first_open` (min,
+   median, max); and whether any timezone field exists. *Problematic:* the two
+   disagreeing by more than a day for a non-trivial share of users — install day is
+   then ambiguous and D1 is not well defined without an explicit, stated choice.
+4. **Identifier.** *Question:* is `user_id` populated, or is `user_pseudo_id` the
+   only identifier? *Artefact:* the null rate of `user_id`, distinct counts of each,
+   and the ratio of distinct `user_pseudo_id` to distinct `user_id` where both
+   exist. *Problematic:* `user_id` null throughout — "a player" then means a
+   device-install, cross-device deduplication is impossible, and that limitation
+   must be stated plainly in Parts 1 and 2 rather than glossed.
+5. **Cohort granularity.** *Question:* is daily install volume large enough for day
+   cohorts, or must cohorts be weekly? *Artefact:* the `first_open` count per
+   calendar day across the window, with min, median and max. *Problematic:* a median
+   daily install count below **100** — day cohorts would then produce retention
+   curves that are mostly sampling noise, and the cohort grain becomes weekly.
+6. **Session semantics.** *Question:* is `ga_session_id` populated and stable, and
+   what engagement fields exist? *Artefact:* the null rate of `ga_session_id`, the
+   median distinct sessions per user, and the distinct list of engagement-related
+   event parameters actually present. *Problematic:* a null or constant session id —
+   "returned on day 7" must then be defined on event presence rather than on
+   sessions, which is a different definition and has to be stated as one.
+7. **Platform mix.** *Question:* what platforms are present, and does the
+   mobile-game framing hold for all rows? *Artefact:* the distinct `platform` and
+   `device.category` values with event and user counts for each. *Problematic:* a
+   material web share, or a platform field that item 13 shows to be obfuscated —
+   either way the population definition needs an explicit filter rather than an
+   assumption.
+8. **Duplicate events.** *Question:* are there duplicate event rows, and does
+   de-duplicating change any count materially? *Artefact:* total event rows versus
+   distinct rows on the natural key (`user_pseudo_id`, `event_name`,
+   `event_timestamp`), as a count and a share. *Problematic:* a duplicate share
+   above **0.1%** — every downstream count then needs a stated de-duplication step,
+   and the Part 1 and Part 2 specifications must name it rather than assume it.
 
 **Additionally, before Part 2 (funnel and monetization) can be specified:**
 
-9. Which monetization events and parameters exist at all (`in_app_purchase`,
-   `purchase`, ad-revenue fields, `event_value_in_usd`), and — critically — whether
-   their values are actually populated or are zero/null throughout the sample.
-   **Part 2 is not specifiable until this is known**, and if revenue is unpopulated
-   the part must be re-scoped to a progression funnel rather than quietly reported
-   as monetization.
-10. The full event-name vocabulary, and whether a coherent progression funnel exists
-    (level start / level end / level up / tutorial steps). Funnel steps cannot be
-    pre-registered before the available steps are known.
-11. Whether funnel steps should be counted per user or per session, which depends on
-    whether the events are session-scoped in this property.
-12. Bytes scanned per query day, so the BigQuery sandbox's 1 TB/month free tier can
-    be budgeted, and so it can be decided whether a materialised extract table is
-    needed to keep the whole project re-runnable without cost.
+9. **Revenue population.** *Question:* which purchase-shaped events exist, and are
+   their revenue values actually populated rather than zero or null? *Artefact:* for
+   each candidate purchase event name — the event count, the count with a non-null
+   and strictly positive revenue value, the distinct users with at least one such
+   event, and that as a share of all users. `spend_virtual_currency` is counted
+   **separately and is explicitly not a revenue event**: it is a soft-currency sink,
+   and counting it as monetization is exactly how an unmonetized sample comes to
+   look monetized. *Problematic:* anything below the thresholds in §10.3 — this item
+   is the sole input to Part 2's scope rule, and it is evaluated once.
+10. **Event vocabulary.** *Question:* what is the complete set of event names, with
+    volumes? *Artefact:* the full distinct `event_name` list with event counts and
+    distinct-user counts, ordered by volume — **the whole list**, established
+    empirically, not a check against names expected in advance. *Problematic:*
+    nothing in particular; this item cannot fail, it can only surprise. What it must
+    settle is whether any event corresponds to a tutorial, and what the actual
+    progression events are. The sample is **reported** to use names including
+    `level_start_quickplay`, `level_complete_quickplay`, `spend_virtual_currency`
+    and `in_app_purchase`, and to contain **no tutorial event at all** — that is an
+    input to be verified by this item, never an assumption to build on. If it holds,
+    the funnel shape originally sketched for Part 2 as first_open → tutorial → first
+    purchase **does not map onto this schema**: its middle step has no referent and
+    the sketch is abandoned rather than approximated. The funnel is then defined
+    from what this item actually finds, by the architecture session, in a later
+    version. **This pass writes no funnel steps, and neither may the recon session.**
+11. **Funnel counting unit.** *Question:* should funnel steps be counted per user or
+    per session? *Artefact:* for the progression events item 10 finds — events per
+    user and events per session, median and 90th percentile, plus whether a step
+    repeats within a single session. *Problematic:* steps that repeat heavily within
+    a session — a per-session funnel would then double-count, the unit must be per
+    user, and every conversion denominator changes accordingly.
+12. **Byte cost.** *Question:* what does each query actually cost, and does the whole
+    project fit the free tier? *Artefact:* for every recon query, **the dry-run
+    estimate, the actual bytes billed, and the divergence between them** — the
+    actuals accumulated into the running total in the recon results file — plus a
+    billed-bytes figure for a full-column scan of one shard as the per-day unit cost.
+    The cost model must be built on **actuals**; an estimate-based model is not an
+    answer to this item, because §10.1's reconciliation rule exists precisely because
+    the two quantities differ. *Problematic:* a projected total that puts the Part 1
+    and Part 2 build queries plus one full re-run over the remaining monthly
+    allowance — a materialised extract table is then required to keep §7.5's
+    zero-cost re-runnability true, and that decision goes to the architecture
+    session, not to the recon session. Also problematic, and reportable in its own
+    right: a systematic divergence between estimated and billed bytes, which tells
+    the architecture session that any cost projection for Parts 1 and 2 has to be
+    built the same way.
 
-When each item is answered, Parts 1 and 2 get their own pre-registration-style
-sections here: population definition, metric definitions with explicit day
-boundaries, cohort construction, and — where a comparison is made — the same
-decision-rule-before-result discipline as Part 3. **No Part 1 or Part 2 metric
-definition may be written into code before the corresponding section exists in this
-file.**
+**Gating both parts:**
+
+13. **Obfuscation, placeholders and segmentability.** *Question:* this dataset is
+    documented as **obfuscated, with placeholder and null values in some fields** —
+    which of the fields Parts 1 and 2 would rely on actually carry usable values?
+    *Artefact:* for each of `geo.country`, `geo.region`, `device.category`,
+    `device.operating_system`, `device.language`, `traffic_source.*` and
+    `app_info.version` — the null rate, the distinct-value count, and the top values
+    with their shares. *Problematic:* a field whose distinct set is a single value,
+    or is dominated by one placeholder, or whose null rate exceeds **50%**. Such a
+    field cannot support segmentation, and no amount of care downstream repairs it.
+    **Consequence, fixed now: every segmentation requirement for Part 1 or Part 2 —
+    segment-by-country included — is contingent on this item.** A segment this item
+    shows to be a placeholder is **dropped, not reported**; no Part 1 or Part 2
+    section may promise a segmentation before this item clears the field it rests
+    on; and if no field survives, Parts 1 and 2 are specified without segmentation
+    and say so in as many words. This item also feeds item 7, since the platform
+    field is one of the fields at risk.
+
+### 10.3 Part 2's scope is decided by item 9, by rule
+
+Item 9 decides whether Part 2 is *funnel and monetization* or *progression funnel
+only*. That decision is made by a rule fixed here, before the query is run, for the
+same reason §1.6 fixes the gate decision before the result: otherwise the scope of
+Part 2 would be chosen after seeing which version of it looks better.
+
+**"Populated" means both of the following, measured over the full shard range from
+item 1, counting only revenue-positive purchase events as defined in item 9:**
+
+- **at least 1,000 revenue-positive purchase events**, and
+- **at least 0.5% of the denominator population defined below with at least one such
+  event.**
+
+**The denominator, named literally.** The denominator is the count of **distinct
+`user_pseudo_id` values with at least one event of any kind in the full shard range
+established by item 1**. Users with events but **no** `first_open` are **in** the
+denominator. No trailing-window exclusion is applied. The numerator uses the **same
+identifier over the same shard range** — distinct `user_pseudo_id` values with at
+least one revenue-positive purchase event.
+
+This is fixed here, not chosen later, because item 2 exists precisely to establish
+that the distinct user count, the count with a `first_open`, and the gap between them
+are three different numbers on this dataset, and item 11 will show whether the
+counting unit changes conversion denominators. A rule whose denominator was selected
+after those numbers were visible would be the failure this subsection opens by saying
+it exists to prevent — the same defect §2.2 had before v1.2 named the SRM
+denominator literally.
+
+Justified on measurement grounds, and every choice resolves in the direction that
+makes the threshold **harder** to clear:
+
+- **All users, not installers only.** The broadest population gives the largest
+  denominator and therefore the hardest bar. Restricting to users with a `first_open`
+  would inflate the payer share by exactly the size of the gap item 2 measures, which
+  is the one direction a scope gate must never be easy in. It would also be
+  inconsistent: a purchase by a user with no `first_open` would count in the
+  numerator while that user was excluded from the denominator.
+- **Independent of every unsettled definition.** This denominator is computable from
+  one unambiguous artefact — distinct identifier values in a shard range — and needs
+  nothing from items 2, 3, 4 or 5. Install attribution, day boundaries, timezone
+  semantics and cohort grain are all unresolved, and a gate must not rest on
+  definitions the recon has not returned yet.
+- **`user_pseudo_id` regardless of what item 4 finds.** It is the identifier a GA4
+  export always carries, so the denominator exists whatever `user_id`'s null rate
+  turns out to be. If `user_id` proves populated and cross-device deduplication
+  becomes possible, `user_pseudo_id` over-counts people — one person on two devices
+  counts twice — which again makes the bar harder, so the conservative reading holds
+  either way.
+- **No trailing-window exclusion.** A user installing on the final shard has little
+  chance to purchase, but this is a sample-adequacy count over the whole extract
+  rather than a cohort metric, and any such exclusion would shrink the denominator
+  and make the bar easier.
+
+**The denominator is not re-selected after item 2, item 4 or item 13 reports.** If
+one of them shows this denominator is unusable — `user_pseudo_id` obfuscated to a
+placeholder, say — that is a `challenge` raised **before** the counts are read as a
+verdict, resolved by the architecture session, never a substitution made while
+looking at the numbers.
+
+| Outcome | Consequence, fixed in advance |
+|---|---|
+| **Both thresholds met** | Part 2 is specified as **funnel and monetization**, as originally scoped. |
+| **Either threshold missed** | Part 2 is **re-scoped to a progression funnel only**. It may not be titled, introduced, or summarised as monetization anywhere — README included — and it must carry an explicit statement that this sample does not support revenue analysis, with the observed counts given. |
+
+Why these numbers, and why both:
+
+- **1,000 events.** Below that, any monetization metric a case study would report —
+  conversion by cohort, ARPPU, revenue per install — has cells small enough that a
+  single heavy spender or a single unusual day dominates the answer. Presenting that
+  as analysis is presenting noise. A genuinely populated sample clears 1,000 events
+  without effort, so the threshold only bites on samples that should not be analysed
+  this way.
+- **0.5% of users.** Casual mobile titles convert in the low single digits of
+  percent. A sample with under one payer in 200 is truncated, obfuscated, or not
+  representative, and a funnel whose final step holds fewer than 1 in 200 users
+  cannot support a per-step comparison between cohorts at all.
+- **Both, not either.** They fail differently and both failures matter: 1,000 events
+  concentrated in twenty users is volume without coverage, and 0.5% coverage of a
+  tiny base is coverage without volume. Requiring both means neither failure mode
+  passes by borrowing the other's strength.
+
+The rule is evaluated **once**, from item 9's committed result file, before any
+Part 2 section is written. Re-counting after seeing which version of Part 2 reads
+better, adjusting the purchase-event set to clear a threshold, or counting
+`spend_virtual_currency` toward it, each invalidate the rule — and whichever side
+fires, the observed counts and both thresholds are printed in the report, so a
+reader can see the rule was applied rather than chosen.
+
+### 10.4 Where recon stops, and the handover
+
+The recon session establishes facts and **stops**. It does not write a metric
+definition, a cohort definition, a funnel step, a day boundary, or a retention
+window — see §8 for the full prohibition, which covers code, comments, drafts and
+"suggested" sections alike.
+
+Handover, in order:
+
+1. The recon session commits its three artifacts (§10.1) with every item resolved to
+   *answered*, *problematic* or *unanswered*, and appends one `finding` entry per
+   item that a later decision rests on.
+2. The architecture session reads them and issues the next version of this document,
+   which specifies Parts 1 and 2: population definition, metric definitions with
+   explicit day boundaries, cohort construction, the Part 2 scope as §10.3's rule
+   determines it, the segmentation §10.2 item 13 permits or forbids, and — wherever
+   a comparison is made — the same decision-rule-before-result discipline as Part 3.
+3. Only then are the Part 1 and Part 2 build sessions defined in §8 and briefed.
+
+**No Part 1 or Part 2 metric definition may be written into code before the
+corresponding section exists in this file.** That rule predates v1.3 and v1.3 does
+not weaken it; specifying the recon pass is what makes it followable, because until
+now the step that produces those sections had no owner.
 
 ---
 
 ## 11. Document control
 
-- **Version:** 1.2. **Written:** 2026-09-10, before any data access. **Amended:**
-  2026-09-10 (v1.1, then v1.2), still before any data access and before the
-  repository was initialised.
+- **Version:** 1.3. **Written:** 2026-09-10, before any data access. **Amended:**
+  2026-09-10 (v1.1, then v1.2), both before any data access and before the
+  repository was initialised; 2026-09-11 (v1.3), after Part 3 was completed and
+  committed, touching nothing inside §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -1458,3 +1830,109 @@ file.**
   statistic computed. v1.2 is therefore a second pre-freeze amendment and the
   pre-registration remains valid; the freeze will attach to whichever version is
   current at the commit preceding the first `src/` commit — v1.2 or later.
+
+### v1.3 — 2026-09-11
+
+- **Sections touched:** header, §7.2, §8, §9, §10, §11. **None inside §1–§6.**
+- **Substantive change:**
+  - **§10 (restructured into §10.1–§10.4)** — the recon pass now has an owner, a
+    budget, an output contract and a stopping point. A **dedicated recon session**
+    runs it, separate from the Part 1 and Part 2 build sessions, so that the handover
+    through the architecture session is structural rather than a matter of
+    discipline: a session holding the shard ranges and null rates in context is a
+    session choosing metric definitions with the answers in front of it. Byte
+    budget fixed at **50 GiB per query and 200 GiB total**, every query dry-run
+    first, shard inventory taken from table metadata at no byte cost, and a query
+    over ceiling narrowed or recorded *unanswered* — never run, never re-ceilinged,
+    billing never enabled. Three output artifacts with explicit precedence: the
+    committed CSVs are the source of truth for every **number**, the `finding`
+    entries for the **interpretation**, the report a rendering of both.
+  - **§10.2** — the twelve questions became a **thirteen-item executable checklist**:
+    each item now states its question, the exact artefact that answers it, and what
+    a problematic answer would be, resolving to *answered* / *problematic* /
+    *unanswered*. Item 10 rewritten to establish the event vocabulary **empirically**
+    and to treat the reported names (`level_start_quickplay`,
+    `level_complete_quickplay`, `spend_virtual_currency`, `in_app_purchase`, and no
+    tutorial event) as an input to verify rather than build on — if that holds, the
+    sketched first_open → tutorial → first purchase funnel has no middle step and is
+    abandoned rather than approximated. **Item 13 added** for the dataset's
+    documented obfuscation: per-field null rates and distinct-value profiles, with
+    the consequence fixed now that every segmentation requirement, segment-by-country
+    included, is contingent on it and is dropped rather than reported if the field
+    turns out to be a placeholder.
+  - **§10.3 (new)** — Part 2's re-scope trigger turned from a sentence into a rule
+    with thresholds fixed before the query runs: **≥ 1,000 revenue-positive purchase
+    events AND ≥ 0.5% of users with at least one**, both required, with a named
+    consequence on each side and `spend_virtual_currency` explicitly excluded from
+    the purchase set. Evaluated once, from the committed result file.
+  - **§8** — opening rewritten for multiple sessions; the **recon session's path
+    list** added in the Part 3 session's format, including the only permission to
+    touch BigQuery configuration (user ADC only, no credential file ever committed)
+    and a content-level gate: no metric, cohort, funnel step, day boundary or
+    retention window, in code or in prose.
+  - **§7.2** — reserved **`00`–`09` for recon**, narrowing Part 1 to `10`–`29`, with
+    the reasoning for placing recon ahead of the build ranges rather than in the
+    `90`–`99` QA block, and for treating the ten-slot ceiling as a design signal.
+  - **§9** — **open question 7 added**: whether §7.5's byte-identity rule applies to
+    BigQuery-derived outputs, with a stated default (exempt, provenance line
+    instead; Part 3 unaffected) rather than a silent decision.
+  - **§11** — this entry.
+- **assumptions.md:** added A-076 through A-083. No entry superseded; no Status line
+  annotated. The block was drafted as A-054 through A-060 and renumbered on discovery
+  that the Part 3 implementation session had already appended A-054 through A-075;
+  A-083 records the ID-allocation convention that prevents a repeat. v1.3 adds specification where there was none rather than correcting
+  anything, which is why nothing was superseded.
+- **Touched §1–§6:** **No.** Every change is in §7.2, §8, §9, §10 or §11. **Part 3's
+  pre-registration freeze is therefore untouched** — it attached at v1.2, commit
+  `c6d72f83`, which predates Part 3's first `src/` commit, and Part 3's report cites
+  that commit. Part 3 is complete and nothing in v1.3 can perturb it; the §8 path
+  list for the recon session makes that explicit by forbidding every Part 3 path.
+
+### v1.4 — 2026-09-11
+
+- **Sections touched:** header, §10.1, §10.2 (item 12), §10.3, §11. **None inside
+  §1–§6.**
+- **Substantive change:**
+  - **§10.3** — the user-coverage threshold's **denominator is now named literally**:
+    distinct `user_pseudo_id` values with at least one event of any kind over the full
+    shard range from item 1, with users who have events but no `first_open` explicitly
+    **in**, no trailing-window exclusion, and the numerator bound to the same
+    identifier and range. v1.3 defined the numerator precisely and left "users"
+    undefined, so recon would have returned at least two defensible denominators and
+    the choice between them would have been made with the counts visible — the defect
+    §2.2 had before v1.2. Justified on measurement grounds, with every choice
+    resolving in the direction that makes the threshold harder to clear, and with the
+    denominator explicitly **not re-selectable** after items 2, 4 or 13 report; an
+    unusable denominator is a `challenge` before the counts are read, not a
+    substitution while looking at them.
+  - **§10.1** — the budget is now **tracked in actual bytes billed**, not estimates.
+    The pre-flight gate is unchanged, because an estimate is the only number available
+    before a query runs, but after execution the billed bytes are read from the job
+    statistics and recorded beside the estimate with the divergence, and the running
+    total accumulates actuals. Both ceilings stay at **50 GiB and 200 GiB** — this
+    changes which number the total is kept in, not the budget. Every divergence is a
+    finding in both directions, because under-billing is evidence the planner prunes
+    shards better than the dry run predicts and would make an estimate-based cost
+    model overstate the Part 1 and Part 2 build cost. **Halt rule added:** the pass
+    stops if a query's billed bytes exceed its estimate by more than 2× *and* by more
+    than 10 GiB (both required, so the per-table minimum inflating a trivial query
+    halts nothing), or if billed bytes exceed the 50 GiB per-query ceiling whatever
+    the estimate was. Rationale: the gate is the only cost control and it is
+    estimate-based, so once the estimate is not predictive at that magnitude every
+    later gate decision is unreliable. Under-billing never halts.
+  - **§10.2 item 12** — its artefact now requires estimate, billed, and divergence per
+    query, with the cost model built on actuals; an estimate-based model is explicitly
+    not an answer to the item. A systematic divergence is reportable in its own right,
+    because it tells the architecture session how any Part 1 or Part 2 projection has
+    to be built.
+  - **§11** — this entry.
+- **assumptions.md:** added A-084 through A-086. Partially superseded by named field:
+  A-081 (`Decision`, by A-084, in respect of the user-coverage denominator), A-078
+  (`Decision`, by A-085), A-080 (`Decision`, by A-086). Status lines annotated on all
+  three.
+- **Touched §1–§6:** **No.** Every change is in the header, §10.1, §10.2, §10.3 or
+  §11. **Part 3's pre-registration freeze is untouched** — it attached at v1.2, commit
+  `c6d72f83`, and Part 3 is complete with its report citing that commit. §9's open
+  question 7 remains open by design: the byte-identity decision for BigQuery-derived
+  outputs waits for item 12's figures, and v1.4 strengthens the input to that decision
+  by making those figures actuals rather than estimates.

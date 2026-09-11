@@ -922,3 +922,36 @@ IDs are assigned in write order and are never reserved in advance.
 - **Reason:** §5.5 keeps `data/raw/` git-ignored because redistributing a Kaggle dataset is not ours to grant, and records provenance here instead so that "reproduces exactly" is a claim a reader can check rather than take on trust. The entrypoint verifies this checksum at §7.7 step 2 before anything runs, reading the value from this entry rather than from a constant in code (A-064), so this file remains the single source of truth for it.
 - **Affects:** §7.7 step 2's verification and therefore whether the run proceeds at all; the run manifest's input block; the README fetch step; the reproducibility claim in full.
 - **Falsifiable by:** A different SHA-256 on a copy fetched from the same slug, which would mean the dataset was revised after this run and would make every number in the Part 3 report specific to the revision recorded here. That is precisely what this entry exists to detect.
+
+### A-073 — The `userid` uniqueness assertion passed: no duplicates of any kind
+- **Kind:** finding
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Record that all 90189 `userid` values are distinct, so the duplicate count is zero in every one of §5.2's three cases — same arm with identical metric values, same arm with conflicting values, and across arms — and no row was dropped as an export artefact or excluded from any metric population on duplicate grounds.
+- **Alternatives rejected:** Not applicable — this is an observation. It was obtained at §7.7 step 10 by comparing the count of distinct `userid` values against the number of assignable rows, and is recorded in `outputs/tables/part3_01_data_quality.csv` and in the findings table.
+- **Reason:** A-022 asserts uniqueness rather than assuming it and states that the assertion passing is what would make its branches moot, to be recorded as a finding. This is that record. The cross-arm threshold of 0.1% was therefore never approached, and the cross-arm branch of rule R0 could not have fired.
+- **Affects:** Confirms that the per-metric denominators equal the arm assignment counts exactly, with no duplicate-driven exclusions; closes the §5.2 branches for this dataset.
+- **Falsifiable by:** A future revision of the dataset containing repeated identifiers, which would activate the classification logic that this run left unused.
+
+### A-074 — No missing values anywhere, and no unassignable rows
+- **Kind:** finding
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Record that the file contains no value from the §5.4 missing set in any of the four validated columns: zero rows have a missing `version` and so the unassignable count is zero, zero rows have a missing `retention_1` or `retention_7` in either arm, and zero rows have a missing `sum_gamerounds`; differential missingness between arms is therefore exactly 0.00 pp on both retention metrics.
+- **Alternatives rejected:** Not applicable — this is an observation. It was obtained at §7.7 steps 7, 11 and 17 after the three-state coercion at step 6, and the step 9 count-conservation assertions confirmed that the coerced state counts equal their pre-coercion source-token counts for every column.
+- **Reason:** A-023 and A-050 state that no nulls being present is what would make the missing-value policy moot, to be recorded as a finding. This is that record. Consequently the 0.5% primary-metric threshold and the 0.1% unassignable threshold were never approached, neither could have fired rule R0, and every per-metric denominator equals its arm's assignment count: 44700 for `gate_30` and 45489 for `gate_40` on both metrics.
+- **Affects:** The reported denominators, which are identical to the SRM arm counts; the differential-exclusion check, which is exactly even because there were no exclusions at all.
+- **Falsifiable by:** A future revision of the dataset containing nulls, which would activate the per-metric exclusion path that this run left unused.
+
+### A-075 — The SRM p-value is 0.00869: above the pre-registered failure threshold, below conventional alpha
+- **Kind:** finding
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Record that the assignment population splits 44700 `gate_30` against 45489 `gate_40` out of 90189, an excess of 789 rows in the variant arm and an observed control share of 0.495626 against the hypothesised 0.5; the two-sided exact binomial p-value is 0.00869223438909 and the 1-df chi-square goodness-of-fit statistic is 6.90240494961 with p = 0.00860798781084. Because 0.00869 is greater than the 0.001 failure threshold fixed in §2.3, SRM did **not** trip, rule R0 did **not** fire, and the recommendation is **not** withheld.
+- **Alternatives rejected:** Not applicable — this is an observation. It was obtained at §7.7 step 8 on the assignment population, fixed before any exclusion, and is reported unconditionally per §2.2.
+- **Reason:** Recorded as its own entry because this is the one number in the run where the pre-registration's threshold choice is load-bearing rather than incidental. The same p-value would be "significant" at the conventional 0.05 and would trip an alarm calibrated there. §2.3 fixed the threshold at 0.001 before any data was seen, on the stated grounds that SRM is a data-quality alarm on a nuisance parameter and is tuned for specificity, that the failure modes it exists to catch — a broken assignment service, a logging filter on one arm, a bot-traffic asymmetry — produce gross rather than marginal imbalance, and that a false alarm discards a valid experiment while a small missed imbalance shifts arm weights rather than within-arm rates. An imbalance of 0.44 percentage points off an even split is marginal by that standard. Had the threshold been chosen after seeing this p-value it would carry no weight at all, in either direction; it is recorded here so a reader can confirm the ordering from git rather than take it on trust.
+- **Affects:** Whether rule R0 fires, and therefore whether a recommendation is issued at all. Also the §2.4 diagnostic subsection, which is not required here because the downgrade did not trigger, and the §2.1 conditional statement about weighted designs, which is required in the report regardless of this outcome.
+- **Falsifiable by:** Documentation of the experiment's true design ratio. If the original allocation was weighted rather than 1:1, this p-value tests the wrong null and is uninterpretable — which is precisely the permanent unknown recorded in A-008 and A-046, and why §2.1 requires the conditional statement to be printed whether or not the test trips.

@@ -139,7 +139,7 @@ def write_all() -> list[Path]:
     written.append(_save(fig, "part3_03_power_curve.png"))
 
     # 04 — engagement distribution (from part3_09) ---------------------------
-    bins = _read(tables / "part3_09_engagement_distribution.csv")
+    bins = _read(tables / "part3_10_engagement_distribution.csv")
     fig, ax = plt.subplots()
     labels, width, offset = [], 0.4, {config.ARM_CONTROL: -0.2, config.ARM_VARIANT: 0.2}
     edges = sorted({int(b["bin_low"]) for b in bins})

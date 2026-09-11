@@ -49,6 +49,8 @@ def display(value: Any, unit: str) -> str:
         if p == 0.0:
             return "<1e-300"
         return f"{p:.{config.PVALUE_SIGFIGS}g}"
+    if unit == "power":
+        return f"{float(value):.4f}"
     if unit == "proportion":
         return f"{float(value):.6f}"
     if unit == "share":
@@ -170,7 +172,7 @@ def write_all(*, raw_rows: int, provenance: dict, unassignable: int,
         kv("n_control", power["n_control"], "count", "Observed, not the nominal 1:1."),
         kv("n_variant", power["n_variant"], "count", "Observed, not the nominal 1:1."),
         kv("alpha", power["alpha"], "proportion", "Two-sided (§1.3)."),
-        kv("power_at_1pp", power["power_at_mde"], "proportion",
+        kv("power_at_1pp", power["power_at_mde"], "power",
            "Power to detect a 1.00 pp absolute difference at observed n and baseline."),
         kv("detectable_at_80_power_pp", power["detectable_at_80_pp"], "pp",
            "Smallest absolute difference detectable at 80% power."),
@@ -252,13 +254,40 @@ def write_all(*, raw_rows: int, provenance: dict, unassignable: int,
     written.append(write_csv(_p("part3_07_guardrail_inference.csv"), KV_COLUMNS, rows))
 
     # 08 / 09 — engagement ---------------------------------------------------
+    engagement_rows = [
+        {**r,
+         "n_display": display(r["n"], "count"),
+         "mean_display": display(r["mean"], "pp"),
+         "median_display": display(r["median"], "pp"),
+         "max_display": display(r["max"], "count"),
+         "winsorised_mean_display": display(r["winsorised_mean"], "pp")}
+        for r in engagement["rows"]
+    ]
     written.append(write_csv(
         _p("part3_08_engagement.csv"),
-        ("arm", "variant", "n", "mean", "median", "std", "min", "max", "winsorised_mean"),
-        engagement["rows"]))
+        ("arm", "variant", "n", "n_display", "mean", "mean_display",
+         "median", "median_display", "std", "min", "max", "max_display",
+         "winsorised_mean", "winsorised_mean_display"),
+        engagement_rows))
     written.append(write_csv(
-        _p("part3_09_engagement_distribution.csv"),
+        _p("part3_10_engagement_distribution.csv"),
         ("arm", "bin_low", "bin_high", "count"), engagement["bins"]))
+
+    rows = [
+        kv("extreme_value_rounds", engagement["extreme_value"], "count",
+           "§5.1: disclosed, kept in the primary analysis, never silently deleted."),
+        kv("extreme_arm", engagement["extreme_arm"], "text", ""),
+        kv("extreme_tied_rows", engagement["extreme_tied_rows"], "count",
+           "Rows sharing the maximum value (A-067)."),
+        kv("winsor_percentile", engagement["winsor_percentile"], "statistic",
+           "Pooled cap applied identically to both arms (A-068)."),
+        kv("winsor_cap_rounds", engagement["winsor_cap"], "count", ""),
+        kv("missing_sum_gamerounds", engagement["missing_sum_gamerounds"], "count",
+           "Affects engagement descriptives only (§5.3)."),
+        kv("n_analysed", engagement["n_analysed"], "count", ""),
+    ]
+    written.append(write_csv(_p("part3_09_engagement_disclosure.csv"),
+                             KV_COLUMNS, rows))
 
     # 10 — decision ----------------------------------------------------------
     rows = [
@@ -283,7 +312,7 @@ def write_all(*, raw_rows: int, provenance: dict, unassignable: int,
     for rule, hit in (decision.stage3_conditions or {}).items():
         rows.append(kv(f"stage3_condition.{rule}", hit, "text",
                        STAGE_NOTE.get(rule, "")))
-    written.append(write_csv(_p("part3_10_decision.csv"), KV_COLUMNS, rows))
+    written.append(write_csv(_p("part3_11_decision.csv"), KV_COLUMNS, rows))
 
     # 11 — findings ----------------------------------------------------------
     rows = [
@@ -292,7 +321,7 @@ def write_all(*, raw_rows: int, provenance: dict, unassignable: int,
         for f in state.findings
     ]
     written.append(write_csv(
-        _p("part3_11_findings.csv"),
+        _p("part3_12_findings.csv"),
         ("step", "finding_id", "description", "values"), rows))
 
     return written

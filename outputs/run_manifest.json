@@ -194,7 +194,7 @@
     },
     {
       "path": "outputs/tables/part3_03_power.csv",
-      "sha256": "f493b5ee0901e2f1c73980ba49abfe79871a0701fe3c4c06880e58e00a9e5373"
+      "sha256": "afad5d9dacdfe4963547f21ac254cb4d57995966680ac2ddb59d9af2e835451a"
     },
     {
       "path": "outputs/tables/part3_04_power_curve.csv",
@@ -214,18 +214,22 @@
     },
     {
       "path": "outputs/tables/part3_08_engagement.csv",
-      "sha256": "e8a26a552a3b446c5e86b13e21286fbf33045b10d6c239f41b3587f0fb1e4df9"
+      "sha256": "f479e83edb026c564c02c94c0563615dc98e5cbe5384c737ee8bb84bc75a375b"
     },
     {
-      "path": "outputs/tables/part3_09_engagement_distribution.csv",
+      "path": "outputs/tables/part3_09_engagement_disclosure.csv",
+      "sha256": "3ba8f58bcfdd029c58321edb819ae6d1d402497e47cdcceeed965e4cb86362e2"
+    },
+    {
+      "path": "outputs/tables/part3_10_engagement_distribution.csv",
       "sha256": "d89ee68870a36840ff546e56e16b269fb34a38b2f1786021c4c0e83907ceab61"
     },
     {
-      "path": "outputs/tables/part3_10_decision.csv",
+      "path": "outputs/tables/part3_11_decision.csv",
       "sha256": "b528b03601ac0d7ea364ac851522350ed0347bd1e16c169bde5de361d3b0db88"
     },
     {
-      "path": "outputs/tables/part3_11_findings.csv",
+      "path": "outputs/tables/part3_12_findings.csv",
       "sha256": "f0200c89cab4fc8158e1769ae47ca486bf64e46b60a6b3c18e161128ec942d84"
     }
   ],
@@ -234,8 +238,8 @@
     "architecture_blob_sha": "29b4f465421b18e8cd9dcbd2b7380e5962fd1305",
     "architecture_commit": "c6d72f834359fba8b8748a0d7251592a8cab80c5",
     "architecture_file_sha256": "1d8286d3aa77a917285fdb692b25493aedfe8485f99f7c8e45bde761d6b6bac9",
-    "assumptions_file_sha256": "939f2462d03605960cae644dac145202185ad525f2b0bf36714e1555736f9d8f",
+    "assumptions_file_sha256": "b0cd9e0ed8d6783806add082acf15e59bc30d2a8d6f76f1fe59f14f3b5ce61a8",
     "note": "The Part 3 report cites the architecture commit. The file hashes let a reader confirm the document was not altered after that commit without needing the repository."
   },
-  "run_timestamp_utc": "2026-09-11T04:05:11+00:00"
+  "run_timestamp_utc": "2026-09-11T04:13:33+00:00"
 }

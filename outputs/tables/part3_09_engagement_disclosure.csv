@@ -1,0 +1,8 @@
+quantity,value,value_display,unit,note
+extreme_value_rounds,49854,"49,854",count,"§5.1: disclosed, kept in the primary analysis, never silently deleted."
+extreme_arm,gate_30,gate_30,text,
+extreme_tied_rows,1,1,count,Rows sharing the maximum value (A-067).
+winsor_percentile,99,99.0000,statistic,Pooled cap applied identically to both arms (A-068).
+winsor_cap_rounds,493,493,count,
+missing_sum_gamerounds,0,0,count,Affects engagement descriptives only (§5.3).
+n_analysed,90189,"90,189",count,

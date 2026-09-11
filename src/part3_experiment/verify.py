@@ -103,7 +103,7 @@ def self_verify(*, state: RunState, decision, primary: dict, guardrail: dict,
     checks.append("SRM denominator is the assignment population, fixed before exclusions")
 
     # --- EXACTLY ONE Stage 2 branch fired ----------------------------------
-    decision_table = _kv(config.TABLES_DIR / "part3_10_decision.csv")
+    decision_table = _kv(config.TABLES_DIR / "part3_11_decision.csv")
     fired = [r for r in ("R1", "R2", "R3", "R4", "R5")
              if decision_table.get(f"stage2_condition.{r}") == "true"]
     _require(len(fired) == 1,

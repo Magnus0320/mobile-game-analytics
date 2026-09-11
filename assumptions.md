@@ -895,3 +895,14 @@ IDs are assigned in write order and are never reserved in advance.
 - **Reason:** §7.7's failure-class definition says a hard stop writes no outputs, and step 20 necessarily runs after step 19 has written them, so the definition cannot hold there on its own terms. The document scopes the invariant itself in the sentence that follows the step list — "steps 1–6 and the assertion group at step 9 are the only places the run can terminate **on the data**" — which makes step 20 a stop on the code's own consistency rather than on the input. The intent is unambiguous; only the label is imprecise, and the operational consequence is carried by the commit discipline recorded here.
 - **Affects:** `verify.py`; `run_part3.sh`'s exit status; which runs produce committed artefacts.
 - **Falsifiable by:** Not applicable — this records how an acknowledged imprecision in the failure-class label is resolved, not a choice between substantive alternatives.
+
+### A-071 — Percentile endpoints are taken with linear interpolation between order statistics
+- **Kind:** decision
+- **Part:** 3
+- **Date:** 2026-09-11
+- **Status:** active
+- **Decision:** Compute the 2.5% and 97.5% percentiles of the bootstrap replicate distribution with `numpy.percentile` under its default `linear` method, which interpolates between the two order statistics bracketing the requested rank, and state the method in the report.
+- **Alternatives rejected:** The `lower` and `higher` methods, which snap each endpoint to an adjacent order statistic — they bias the interval systematically outward or inward by up to one replicate gap, and the direction of that bias differs between the two endpoints. The `nearest` method — it removes the bias but makes the endpoint a step function of the resample count, so an interval could shift discontinuously under a change §4.2 would treat as immaterial. Leaving the method to the library default without recording it — the default is what is being chosen here, and a reader checking an endpoint against the threshold is entitled to know how it was formed.
+- **Reason:** With 10,000 replicates the requested ranks fall between order statistics rather than on them, so some convention is unavoidable; linear interpolation is the one that treats both tails symmetrically and varies smoothly with the resample count. The practical effect is bounded by the gap between adjacent replicates, on the order of a thousandth of a percentage point against a 1.00 pp threshold, but it is recorded rather than waved away because it is an input to the rule that selects the recommendation.
+- **Affects:** `bootstrap.py`; both reported percentile intervals; the action-threshold comparison in rules R1, R2, R4 and R5.
+- **Falsifiable by:** An endpoint landing close enough to ±1.00 pp that the interpolation method changes which rule fires, which would be reported explicitly as a knife-edge result rather than resolved silently.

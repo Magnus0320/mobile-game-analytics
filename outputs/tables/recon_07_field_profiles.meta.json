@@ -1,0 +1,14 @@
+{
+  "actual_bytes_billed": 629145600,
+  "bytes_processed": 629138314,
+  "divergence_bytes": 7286,
+  "divergence_ratio": 1.0,
+  "dry_run_estimate_bytes": 629138314,
+  "job_id": "recon_recon_07_field_profiles_20260912T030848Z",
+  "note": "Provenance per ARCHITECTURE.md \u00a710.1 and A-086. The source is an external table that no checksum covers, so this file records what authorised the query and what it cost, in place of \u00a77.5's cross-machine byte-identity rule (\u00a79 open question 7).",
+  "query_file": "sql/07_recon_field_profiles.sql",
+  "query_job_date": "2026-09-12T03:08:54Z",
+  "result_file": "recon_07_field_profiles.csv",
+  "row_count": 229,
+  "shard_range_covered": "20180612-20181003 (114 shards)"
+}

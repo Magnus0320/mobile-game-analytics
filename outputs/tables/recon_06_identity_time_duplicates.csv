@@ -1,0 +1,30 @@
+section,metric,value_num,value_text,note
+item_3_timestamps,first_open_gap_over_one_day_rows,13,,first_open rows whose gap exceeds one day in absolute value
+item_3_timestamps,first_open_gap_over_one_day_share_ppm,2778,,parts per million of users with a first_open; §10.2 item 3 fixes no threshold
+item_3_timestamps,first_open_gap_over_one_day_users,12,,distinct users behind those rows
+item_3_timestamps,first_open_gap_seconds_max,68758101,,maximum of the same gap; 86400 seconds is one day
+item_3_timestamps,first_open_gap_seconds_min,-94,,"first_open event_timestamp minus user_first_touch_timestamp, seconds"
+item_3_timestamps,first_open_gap_seconds_p50,0,,median of the same gap
+item_3_timestamps,first_open_gap_seconds_p99,81,,99th percentile of the same gap
+item_3_timestamps,first_open_rows,4322,,first_open rows the gap distribution is computed over
+item_3_timestamps,first_open_users_total,4319,,distinct users with at least one first_open; denominator for the share
+item_3_timestamps,max_event_timestamp,1538636483482000,,raw INT64 value
+item_3_timestamps,max_event_timestamp_as_micros_utc,,2018-10-04 07:01:23.482 UTC,"if this lands inside the shard range, the unit is microseconds"
+item_3_timestamps,min_event_timestamp,1528786810908005,,raw INT64 value
+item_3_timestamps,min_event_timestamp_as_micros_utc,,2018-06-12 07:00:10.908005 UTC,"if this lands inside the shard range, the unit is microseconds"
+item_3_timestamps,rows_event_date_ne_shard_suffix,0,,event_date disagreeing with the shard it is stored in
+item_3_timestamps,rows_event_date_ne_utc_date_of_timestamp,1935518,,event_date disagreeing with the UTC date implied by event_timestamp
+item_3_timestamps,rows_event_date_one_day_ahead_utc,0,,event_date is the UTC date plus one day
+item_3_timestamps,rows_event_date_one_day_behind_utc,1935518,,event_date is the UTC date minus one day
+item_3_timestamps,rows_event_date_same_as_utc,3764482,,event_date equals the UTC date
+item_3_timestamps,tz_offset_distinct_values,31,,distinct device.time_zone_offset_seconds values; 1 or 0 means no usable local zone
+item_3_timestamps,tz_offset_null_rows,0,,device.time_zone_offset_seconds NULL
+item_3_timestamps,user_first_touch_timestamp_null_rows,0,,rows with no recorded first-touch timestamp
+item_4_identifier,distinct_user_id,0,,distinct non-null user_id values
+item_4_identifier,distinct_user_pseudo_id,15175,,distinct user_pseudo_id values; §10.3 and A-084 denominator
+item_4_identifier,user_id_null_rows,5700000,,rows with a NULL user_id
+item_4_identifier,user_id_null_share_ppm,1000000,,parts per million of all rows
+item_8_duplicates,distinct_natural_keys,5699793,,"distinct (user_pseudo_id, event_name, event_timestamp)"
+item_8_duplicates,duplicate_rows,207,,total minus distinct on the natural key
+item_8_duplicates,duplicate_share_ppm,36,,parts per million; §10.2 item 8 is problematic above 0.1% = 1000 ppm
+item_8_duplicates,total_event_rows,5700000,,rows across the full shard range

@@ -115,3 +115,81 @@ outputs/tables/   every number in the reports, as CSV
 outputs/figures/  every figure, generated from those tables
 src/              analysis code; run_part3.py holds the execution order
 ```
+
+---
+
+## Dataset recon
+
+Parts 1 and 2 run on the GA4 public sample
+(`firebase-public-project.analytics_153293282.events_*`), which
+`ARCHITECTURE.md` §10 deliberately leaves unspecified until the table has been
+looked at. A dedicated recon pass established the facts first and stopped there;
+its findings are in
+[`reports/recon_ga4_sample.md`](reports/recon_ga4_sample.md).
+
+**Headline results.** 114 contiguous daily shards, 20180612–20181003, 5,700,000
+events, 15,175 distinct users. Seven of the thirteen checklist items came back
+problematic:
+
+| Finding | Consequence |
+|---|---|
+| `user_id` is null on every row | a "player" is a device-install; no cross-device deduplication |
+| No session identifier exists at all | a return visit cannot be defined on sessions |
+| 71.54% of users have events but no `first_open` | install cohorts need a stated treatment for them |
+| 27 revenue-positive purchase events, 0.178% payer coverage | **Part 2 is a progression funnel, not monetization** |
+| No tutorial event exists | the originally sketched funnel has no middle step |
+| `geo.region` is 88.57% null | region segmentation is dropped; **country survives** |
+
+The Part 2 scope outcome was decided by a rule fixed in `ARCHITECTURE.md` §10.3
+**before the query ran**, with both thresholds and the observed counts printed
+either way.
+
+**Reproducing the pass.** It needs the Google Cloud SDK and a BigQuery-enabled
+project; queries run against a public dataset and are billed to your own project
+under the sandbox's free monthly tier.
+
+```bash
+brew install --cask gcloud-cli
+gcloud auth login
+gcloud auth application-default login
+```
+
+`bq` authenticates against the gcloud CLI account rather than against
+application-default credentials, so the first command is what makes queries run;
+the second satisfies §8's requirement and is what any later client would use.
+Both store user credentials in `~/.config/gcloud`. **No credential file is ever
+written into this repository**, and the destination project id lives only in an
+environment variable:
+
+```bash
+export GOOGLE_CLOUD_PROJECT=your-project-id
+```
+
+Then run the queries in numeric order — the `NN` prefix is execution order:
+
+```bash
+bash src/recon/budget.sh seed
+for q in sql/0*_recon_*.sql; do
+  name="recon_$(basename "$q" .sql | sed 's/^\([0-9]*\)_recon_/\1_/')"
+  bash src/recon/run_recon_query.sh "$q" "$name" "20180612-20181003 (114 shards)"
+done
+```
+
+Each query is dry-run first and executed only if the estimate is within both
+ceilings; actual bytes billed are then read from job statistics and accumulated.
+The recon pass uses no Python and does not touch `.venv/`, `requirements.txt` or
+`requirements.lock.txt` — those describe the environment Part 3's lock file
+certifies, and a completed part must keep reproducing from its own recorded
+environment.
+
+**Cost.** The whole pass billed **4.90 GiB** — 2.45% of the 200 GiB budget
+`ARCHITECTURE.md` §10.1 sets, and 0.48% of the sandbox's 1 TiB monthly free tier.
+Billed bytes follow `max(10 MiB, ceil(processed → MiB))` exactly on every query,
+and dry-run estimates matched bytes processed precisely, so no materialised
+extract is needed to keep re-runs free.
+
+**On output reproducibility.** Recon results come from an external table that no
+checksum covers, so they are exempt from the byte-identity rule that governs Part
+3's outputs (§9 open question 7, A-080/A-086). Each result file instead carries a
+`recon_NN_<name>.meta.json` sidecar recording the shard range covered, the query
+job date, the dry-run estimate, the actual bytes billed and the row count.

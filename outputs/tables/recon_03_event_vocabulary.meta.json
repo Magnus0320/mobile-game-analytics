@@ -1,0 +1,14 @@
+{
+  "actual_bytes_billed": 287309824,
+  "bytes_processed": 286889198,
+  "divergence_bytes": 420626,
+  "divergence_ratio": 1.0015,
+  "dry_run_estimate_bytes": 286889198,
+  "job_id": "recon_recon_03_event_vocabulary_20260912T030443Z",
+  "note": "Provenance per ARCHITECTURE.md \u00a710.1 and A-086. The source is an external table that no checksum covers, so this file records what authorised the query and what it cost, in place of \u00a77.5's cross-machine byte-identity rule (\u00a79 open question 7).",
+  "query_file": "sql/03_recon_event_vocabulary.sql",
+  "query_job_date": "2026-09-12T03:04:49Z",
+  "result_file": "recon_03_event_vocabulary.csv",
+  "row_count": 3627,
+  "shard_range_covered": "20180612-20181003 (114 shards)"
+}

@@ -1,0 +1,14 @@
+{
+  "actual_bytes_billed": 481296384,
+  "bytes_processed": 480689198,
+  "divergence_bytes": 607186,
+  "divergence_ratio": 1.0013,
+  "dry_run_estimate_bytes": 480689198,
+  "job_id": "recon_recon_06_identity_time_duplicates_20260912T030816Z",
+  "note": "Provenance per ARCHITECTURE.md \u00a710.1 and A-086. The source is an external table that no checksum covers, so this file records what authorised the query and what it cost, in place of \u00a77.5's cross-machine byte-identity rule (\u00a79 open question 7).",
+  "query_file": "sql/06_recon_identity_time_duplicates.sql",
+  "query_job_date": "2026-09-12T03:08:22Z",
+  "result_file": "recon_06_identity_time_duplicates.csv",
+  "row_count": 29,
+  "shard_range_covered": "20180612-20181003 (114 shards)"
+}

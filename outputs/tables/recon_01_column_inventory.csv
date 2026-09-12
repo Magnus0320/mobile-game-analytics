@@ -1,0 +1,72 @@
+field_path,data_type,shards_with_path,first_shard,last_shard
+app_info,"STRUCT<id STRING, version STRING, install_store STRING, firebase_app_id STRING, install_source STRING>",114,events_20180612,events_20181003
+app_info.firebase_app_id,STRING,114,events_20180612,events_20181003
+app_info.id,STRING,114,events_20180612,events_20181003
+app_info.install_source,STRING,114,events_20180612,events_20181003
+app_info.install_store,STRING,114,events_20180612,events_20181003
+app_info.version,STRING,114,events_20180612,events_20181003
+device,"STRUCT<category STRING, mobile_brand_name STRING, mobile_model_name STRING, mobile_marketing_name STRING, mobile_os_hardware_model STRING, operating_system STRING, operating_system_version STRING, vendor_id STRING, advertising_id STRING, language STRING, is_limited_ad_tracking STRING, time_zone_offset_seconds INT64>",77,events_20180612,events_20180827
+device,"STRUCT<category STRING, mobile_brand_name STRING, mobile_model_name STRING, mobile_marketing_name STRING, mobile_os_hardware_model STRING, operating_system STRING, operating_system_version STRING, vendor_id STRING, advertising_id STRING, language STRING, is_limited_ad_tracking STRING, time_zone_offset_seconds INT64, browser STRING, browser_version STRING>",25,events_20180828,events_20180921
+device,"STRUCT<category STRING, mobile_brand_name STRING, mobile_model_name STRING, mobile_marketing_name STRING, mobile_os_hardware_model STRING, operating_system STRING, operating_system_version STRING, vendor_id STRING, advertising_id STRING, language STRING, is_limited_ad_tracking STRING, time_zone_offset_seconds INT64, browser STRING, browser_version STRING, web_info STRUCT<browser STRING, browser_version STRING, hostname STRING>>",12,events_20180922,events_20181003
+device.advertising_id,STRING,114,events_20180612,events_20181003
+device.browser,STRING,37,events_20180828,events_20181003
+device.browser_version,STRING,37,events_20180828,events_20181003
+device.category,STRING,114,events_20180612,events_20181003
+device.is_limited_ad_tracking,STRING,114,events_20180612,events_20181003
+device.language,STRING,114,events_20180612,events_20181003
+device.mobile_brand_name,STRING,114,events_20180612,events_20181003
+device.mobile_marketing_name,STRING,114,events_20180612,events_20181003
+device.mobile_model_name,STRING,114,events_20180612,events_20181003
+device.mobile_os_hardware_model,STRING,114,events_20180612,events_20181003
+device.operating_system,STRING,114,events_20180612,events_20181003
+device.operating_system_version,STRING,114,events_20180612,events_20181003
+device.time_zone_offset_seconds,INT64,114,events_20180612,events_20181003
+device.vendor_id,STRING,114,events_20180612,events_20181003
+device.web_info,"STRUCT<browser STRING, browser_version STRING, hostname STRING>",12,events_20180922,events_20181003
+device.web_info.browser,STRING,12,events_20180922,events_20181003
+device.web_info.browser_version,STRING,12,events_20180922,events_20181003
+device.web_info.hostname,STRING,12,events_20180922,events_20181003
+event_bundle_sequence_id,INT64,94,events_20180702,events_20181003
+event_date,STRING,114,events_20180612,events_20181003
+event_dimensions,STRUCT<hostname STRING>,37,events_20180828,events_20181003
+event_dimensions.hostname,STRING,37,events_20180828,events_20181003
+event_name,STRING,114,events_20180612,events_20181003
+event_params,"ARRAY<STRUCT<key STRING, value STRUCT<string_value STRING, int_value INT64, float_value FLOAT64, double_value FLOAT64>>>",114,events_20180612,events_20181003
+event_params.key,STRING,114,events_20180612,events_20181003
+event_params.value,"STRUCT<string_value STRING, int_value INT64, float_value FLOAT64, double_value FLOAT64>",114,events_20180612,events_20181003
+event_params.value.double_value,FLOAT64,114,events_20180612,events_20181003
+event_params.value.float_value,FLOAT64,114,events_20180612,events_20181003
+event_params.value.int_value,INT64,114,events_20180612,events_20181003
+event_params.value.string_value,STRING,114,events_20180612,events_20181003
+event_previous_timestamp,INT64,114,events_20180612,events_20181003
+event_server_timestamp_offset,INT64,94,events_20180702,events_20181003
+event_timestamp,INT64,114,events_20180612,events_20181003
+event_value_in_usd,FLOAT64,99,events_20180627,events_20181003
+geo,"STRUCT<continent STRING, country STRING, region STRING, city STRING>",77,events_20180612,events_20180827
+geo,"STRUCT<continent STRING, country STRING, region STRING, city STRING, sub_continent STRING, metro STRING>",37,events_20180828,events_20181003
+geo.city,STRING,114,events_20180612,events_20181003
+geo.continent,STRING,114,events_20180612,events_20181003
+geo.country,STRING,114,events_20180612,events_20181003
+geo.metro,STRING,37,events_20180828,events_20181003
+geo.region,STRING,114,events_20180612,events_20181003
+geo.sub_continent,STRING,37,events_20180828,events_20181003
+platform,STRING,114,events_20180612,events_20181003
+stream_id,STRING,114,events_20180612,events_20181003
+traffic_source,"STRUCT<name STRING, medium STRING, source STRING>",114,events_20180612,events_20181003
+traffic_source.medium,STRING,114,events_20180612,events_20181003
+traffic_source.name,STRING,114,events_20180612,events_20181003
+traffic_source.source,STRING,114,events_20180612,events_20181003
+user_first_touch_timestamp,INT64,114,events_20180612,events_20181003
+user_id,STRING,114,events_20180612,events_20181003
+user_ltv,"STRUCT<revenue FLOAT64, currency STRING>",114,events_20180612,events_20181003
+user_ltv.currency,STRING,114,events_20180612,events_20181003
+user_ltv.revenue,FLOAT64,114,events_20180612,events_20181003
+user_properties,"ARRAY<STRUCT<key STRING, value STRUCT<string_value STRING, int_value INT64, float_value FLOAT64, double_value FLOAT64, set_timestamp_micros INT64>>>",114,events_20180612,events_20181003
+user_properties.key,STRING,114,events_20180612,events_20181003
+user_properties.value,"STRUCT<string_value STRING, int_value INT64, float_value FLOAT64, double_value FLOAT64, set_timestamp_micros INT64>",114,events_20180612,events_20181003
+user_properties.value.double_value,FLOAT64,114,events_20180612,events_20181003
+user_properties.value.float_value,FLOAT64,114,events_20180612,events_20181003
+user_properties.value.int_value,INT64,114,events_20180612,events_20181003
+user_properties.value.set_timestamp_micros,INT64,114,events_20180612,events_20181003
+user_properties.value.string_value,STRING,114,events_20180612,events_20181003
+user_pseudo_id,STRING,114,events_20180612,events_20181003

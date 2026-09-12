@@ -1,0 +1,14 @@
+{
+  "actual_bytes_billed": 38797312,
+  "bytes_processed": 38133989,
+  "divergence_bytes": 663323,
+  "divergence_ratio": 1.0174,
+  "dry_run_estimate_bytes": 38133989,
+  "job_id": "recon_recon_02_shard_scan_cost_20260912T030403Z",
+  "note": "Provenance per ARCHITECTURE.md \u00a710.1 and A-086. The source is an external table that no checksum covers, so this file records what authorised the query and what it cost, in place of \u00a77.5's cross-machine byte-identity rule (\u00a79 open question 7).",
+  "query_file": "sql/02_recon_shard_scan_cost.sql",
+  "query_job_date": "2026-09-12T03:04:06Z",
+  "result_file": "recon_02_shard_scan_cost.csv",
+  "row_count": 1,
+  "shard_range_covered": "single shard 20181003; all columns"
+}

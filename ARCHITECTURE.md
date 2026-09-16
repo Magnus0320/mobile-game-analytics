@@ -1,10 +1,12 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.4. §1–§6 are Part 3's pre-registration and are **frozen** as of
+**Status:** v1.5. §1–§6 are Part 3's pre-registration and are **frozen** as of
 commit `c6d72f83` (v1.2), which predates Part 3's first `src/` commit; Part 3 is
-complete and its report cites that commit. Neither v1.3 nor v1.4 changes anything
-inside §1–§6 — both specify the Parts 1 and 2 recon pass and nothing else. §11
-records what changed in each version.
+complete and its report cites that commit. Nothing in v1.3, v1.4 or v1.5 changes
+anything inside §1–§6. The recon pass specified in v1.3 and v1.4 is **complete**,
+committed at `70c5475`; v1.5 replaces §10's deferral with full specifications for
+Part 1 (§10.5) and Part 2 (§10.6), written from those findings. §11 records what
+changed in each version.
 
 **Purpose.** This document fixes the decisions that must not be made after seeing
 results. Implementation sessions read it and follow it. They do not edit it.
@@ -913,7 +915,9 @@ mobile-game-analytics/
 ├── data/
 │   ├── raw/                      # git-ignored; fetched, checksum-verified
 │   └── interim/                  # git-ignored; regenerable
-├── sql/                          # Parts 1 and 2 only — created by Part 1's session
+├── run_part1.sh                  # Part 1 wrapper
+├── run_part2.sh                  # Part 2 wrapper
+├── sql/                          # 00–09 recon, 10–29 Part 1, 30–59 Part 2 (§7.2)
 ├── src/
 │   └── part3_experiment/         # Part 3's Python
 ├── outputs/
@@ -922,8 +926,9 @@ mobile-game-analytics/
 │   └── run_manifest.json         # committed
 └── reports/
     ├── part3_cookie_cats_experiment.md
-    ├── part1_retention_cohorts.md        # later
-    └── part2_funnel_monetization.md      # later
+    ├── recon_ga4_sample.md               # the recon findings document
+    ├── part1_retention_cohorts.md
+    └── part2_progression_funnel.md       # renamed in v1.5; §10.3 forbids "monetization"
 ```
 
 ### 7.2 Naming and numbering
@@ -1234,12 +1239,17 @@ what recon finds.
 
 - `sql/00_recon_*.sql` through `sql/09_recon_*.sql` — the recon queries (§7.2)
 - `src/recon/**` — the query runner and the dry-run budget checker, nothing else
-- `outputs/tables/recon_*.csv` — the raw query results
+- `outputs/tables/recon_*` — **every** file under `outputs/tables/` whose basename
+  begins `recon_`, whatever its extension: the `.csv` result files, the
+  `.meta.json` provenance sidecars (A-093), and `recon_budget_ledger.csv` (A-094).
+  Grants in this section are expressed by **path prefix, never by extension**, so
+  that a sidecar or a ledger cannot fall into the gap between an extension-scoped
+  grant and a prefix-scoped prohibition — which is exactly what `recon_*.csv`
+  against "any output file whose name does not begin `recon_`" did in v1.3 and v1.4.
 - `reports/recon_ga4_sample.md` — the recon findings document
 - `README.md` — a `## Dataset recon` section only
-- `requirements.txt`, `requirements.lock.txt`, `.gitignore` — **append only**, for
-  the BigQuery client dependency and for credential-file ignore patterns. No
-  existing pin may be changed or removed without an `assumptions.md` entry.
+- `requirements.txt`, `requirements.lock.txt`, `.gitignore` — **append only, and
+  narrowly.** See **the dependency rule** below, which applies to every session.
 - `assumptions.md` — **append only**, as for every session
 - BigQuery access configuration: it is the **only** session permitted to touch
   this, and it does so under two absolute rules — authentication is by user
@@ -1268,6 +1278,68 @@ boundary, or retention window** — not in SQL, not in Python, not in the findin
 document, not as a comment, a placeholder, a draft, or a "suggested" section. It
 establishes facts and stops (§10.4). If it believes a definition follows obviously
 from what it found, that belief is an `assumptions.md` `challenge` entry, not code.
+
+**The Part 1 build session owns (may create and modify):**
+
+- `sql/10_*.sql` through `sql/29_*.sql` (§7.2)
+- `src/part1_retention/**`
+- `outputs/tables/part1_*`, `outputs/figures/part1_*` — by prefix, every extension
+- `reports/part1_retention_cohorts.md`
+- `run_part1.sh`
+- `README.md` — the `## Part 1` section only
+- BigQuery access configuration, under the same two rules as the recon session: user
+  credentials only, and no credential file of any kind committed
+- `assumptions.md` — append only, under A-083's re-read rule
+- `requirements*.txt`, `.gitignore` — under the dependency rule below
+
+**The Part 2 build session owns (may create and modify):**
+
+- `sql/30_*.sql` through `sql/59_*.sql` (§7.2)
+- `src/part2_funnel/**`
+- `outputs/tables/part2_*`, `outputs/figures/part2_*` — by prefix, every extension
+- `reports/part2_progression_funnel.md` — the filename carries the re-scope: §10.3
+  forbids presenting Part 2 as monetization anywhere, and a filename is a title
+- `run_part2.sh`
+- `README.md` — the `## Part 2` section only
+- BigQuery access configuration and `assumptions.md` and the dependency rule, exactly
+  as for Part 1
+
+**Neither build session may touch:** `ARCHITECTURE.md`; anything belonging to Part 3
+(`src/part3_experiment/**`, `reports/part3_*`, `outputs/*part3_*`,
+`outputs/run_manifest.json`, `run_part3.sh`, `data/**`, the README's three-sentence
+opener and its `## Part 3` section); anything belonging to the recon session
+(`sql/00`–`09`, `src/recon/**`, `outputs/tables/recon_*`,
+`reports/recon_ga4_sample.md`); the other build session's paths; any `outputs/` file
+whose basename does not begin with its own part prefix; existing `assumptions.md`
+entries; or existing git history.
+
+**Two sessions, run sequentially — Part 1, then Part 2.** Not one session and not two
+in parallel. Two, because each part is a separate deliverable with its own report and
+cleanly separable paths, and because a single session holding both would carry
+Part 1's whole context into Part 2 for no benefit. Sequential, because it is what
+makes the collision rules above sufficient: A-083's re-read-before-append keeps
+`assumptions.md` safe only if no second session is appending at the same time, and
+Part 2 can read Part 1's committed outputs — the population reconciliation, the
+country-constancy finding — instead of recomputing them. **The two sessions must not
+run concurrently.** On the README, each owns only its own heading: neither touches
+the opener (§9 question 8), the `## Part 3` section, or the other's heading.
+
+**Shared SQL (`60`–`89`).** Either build session may add a shared or derived query in
+that range. **Neither may modify a file the other has committed.** If Part 2 needs a
+shared query changed, it copies it to its own range under a new number and records
+why in `assumptions.md` — a committed part's inputs are never silently mutated.
+
+**The dependency rule (every session).** `requirements.txt`,
+`requirements.lock.txt`, `.python-version` and `.gitignore` are append-only, and
+"append" is narrower than it reads: a session may add a dependency **only if
+resolution leaves every existing pin unchanged**. If adding it would move any pin
+that a completed part's lock file describes, the dependency is **not added** and the
+conflict is escalated to the architecture session — because a moved pin silently
+breaks the clean-checkout guarantee (§7.5) of a part that is already finished and
+whose report cites its results. Preferred over adding a dependency at all: use a tool
+that lives outside the project environment, as the recon session did with the `bq`
+CLI, leaving both requirements files byte-for-byte unmodified (A-087). That is the
+pattern, not the exception.
 
 **Cross-session rules:** no session deletes or overwrites another session's outputs.
 No session edits another session's report. `assumptions.md` is append-only for
@@ -1318,15 +1390,40 @@ a stated default, so nothing is blocked on it.
    option and interacts with recon item 12; it is left open rather than decided
    before the byte figures exist.
 
+8. **Should the README's three-sentence opener become project-level? — OPEN, with a
+   stated default.** Raised by v1.5. §7.6's opener is about Part 3's experiment, and
+   the repository will soon hold three parts. Default assumed (A-118): the opener
+   **stays Part 3's and neither build session may touch it**, because two sessions
+   editing the top of the README is a collision with no upside, and because Part 3
+   remains the highest-signal deliverable a reader should meet first. Whether it
+   should be rewritten as a project-level opener once Parts 1 and 2 land is a
+   decision for the architecture session at that point, not for a build session
+   mid-flight.
+
 **If a later part raises a new question**, it is added here with a stated default so
 that work is never blocked on an answer, and recorded in `assumptions.md` the same
 way.
 
 ---
 
-## 10. Parts 1 and 2 — deferred, pending dataset recon
+## 10. Parts 1 and 2 — specification
 
-**Deliberately not specified.** The GA4 public sample
+**The recon is complete.** It ran under the protocol v1.3 and v1.4 specified, and is
+committed at `70c5475`: thirteen items resolved, findings in
+`reports/recon_ga4_sample.md`, numbers in `outputs/tables/recon_*.csv`, interpretation
+in `assumptions.md` A-087 through A-111. Per A-079 **the CSVs are the source of truth
+for every number**, including every number quoted in this section.
+
+§10.1 carries the query-budget protocol forward to the build sessions with ceilings
+reset from what the recon measured. §10.2 closes the checklist. §10.3's scope rule has
+**fired**. §10.4 records that the handover happened. §10.5 and §10.6 are the
+specifications this whole deferral existed to make possible, and §10.7 holds what both
+parts owe the reader regardless of their content.
+
+The paragraph below is kept as written, because it is the reason the recon happened and
+the standard the specifications that follow are held to.
+
+**Deliberately not specified (v1.0–v1.4).** The GA4 public sample
 (`firebase-public-project.analytics_153293282.events_*`) has properties this document
 cannot verify without querying it, and metric definitions written now would be
 guesswork dressed as design. A pre-registration that turns out to describe columns
@@ -1334,13 +1431,9 @@ that do not exist is worse than no pre-registration, because it teaches the read
 to distrust the ones that are real.
 
 A recon pass runs first — cheap, bounded, schema-and-counts only — and only then are
-Parts 1 and 2 specified with the same rigour as §1–§6. v1.3 specifies that pass:
-who runs it (§10.1), what it must establish (§10.2), the one scope decision it
-settles by rule (§10.3), and where it stops (§10.4). It specifies **no** Part 1 or
-Part 2 metric, cohort, funnel step or day boundary, and neither may anything else
-until §10.4's handover has happened.
+Parts 1 and 2 specified with the same rigour as §1–§6.
 
-### 10.1 The recon pass — owner, budget and output
+### 10.1 The query-budget protocol — recon, and now the build sessions
 
 **Owner: a dedicated recon session**, listed in §8, separate from both the completed
 Part 3 session and the future Part 1 and Part 2 build sessions. The reason it is not
@@ -1360,16 +1453,30 @@ under `90`–`99` was rejected — see the note in §7.2.
 no payment method attached, and the project must stay re-runnable at zero cost
 (§7.5). Therefore:
 
-- **Per-query ceiling: 50 GiB.** Checked against the dry-run estimate before the
-  query runs, and against the **actual bytes billed** after it runs.
-- **Total recon ceiling: 200 GiB** across the entire recon pass, **counted in actual
-  bytes billed** (see the reconciliation rule below).
-- 200 GiB is a fifth of the monthly allowance, leaving the rest for the Part 1 and
-  Part 2 build queries and at least one full re-run. Both ceilings are deliberately
-  loose relative to what a schema-and-counts pass on this sample should need, which
-  is the point: a query that trips one is almost certainly wrong — an unfiltered
-  shard range, a `SELECT *` against a nested column, an accidental cross join —
-  rather than a legitimately expensive question.
+**Ceilings, reset in v1.5 from what the recon measured.** The original 50 GiB and
+200 GiB were set against a concern item 12 disproved: that the 10 MiB billing minimum
+applied **per shard**, which would have made a 114-shard wildcard cost 1.14 GiB before
+reading anything. It does not — the minimum is **per query**, and the 114-shard
+wildcard billed **274 MiB** (A-107). The whole recon spent **4.90 GiB of 200 GiB**,
+2.45% of a ceiling set for a risk that was not real, and dry-run estimates equalled
+bytes processed **exactly** on every protocol query. So the ceilings below are set from
+the measured cost of this dataset rather than from the superseded worry:
+
+| Ceiling | Value | Why this number |
+|---|---|---|
+| Per query | **4 GiB** billed | A full-column scan of the **entire** 114-shard range costs **3.87 GiB** (A-107). 4 GiB is therefore the price of the most expensive query anyone could legitimately write against this table. A query estimating above it is reading more than the whole dataset, which takes a join blow-up or a missing predicate — exactly the mistake class a ceiling should catch, and nothing a correct query can trip. |
+| Per build session | **20 GiB** billed | Roughly five full-table scans, against a part that should need well under 2 GiB if it selects columns at all — the recon did thirteen queries, one of them a deliberate full-column scan, for 4.90 GiB. |
+| Both build sessions together | **40 GiB** billed | Recon plus both builds plus one full re-run of everything then fits inside about 90 GiB — under 9% of the sandbox's 1 TiB monthly allowance, which is what keeps §7.5's zero-cost re-runnability comfortable rather than marginal. |
+
+- **Billed bytes are predictable, so predict them.** A-107 established the exact rule
+  **billed = max(10 MiB, ceil(processed → whole MiB))**, holding without exception on
+  all 13 ledger rows, with estimates equal to processed on every protocol query. The
+  gate is therefore no longer a tolerance band but a **prediction**: before a query
+  runs, predicted billed = `max(10 MiB, ceil(estimate → MiB))`.
+- **Anything answerable from table metadata is answered from metadata, at zero cost.**
+  A-107 showed `size_bytes` predicts billed bytes to within the MiB rounding, so any
+  question about size, row counts or shard inventory is a metadata question, never a
+  scan.
 - **Every query is dry-run first.** The estimate is recorded before the query is
   executed, and the query runs only if the estimate is within the per-query ceiling
   *and* within the remaining total. The estimate is the only number available before
@@ -1393,12 +1500,19 @@ no payment method attached, and the project must stay re-runnable at zero cost
   matters as much as over-billing: if execution prunes shards better than the dry run
   predicts, a per-day cost model built on estimates overstates the Part 1 and Part 2
   build cost and could force a materialised extract that is not actually needed.
-- **Halt rule.** The pass **stops** if either of these fires:
-  - a single query's **billed** bytes exceed its dry-run estimate by more than
-    **2×** *and* by more than **10 GiB** in absolute terms — both conditions
-    required, so that the per-table minimum inflating a trivially small query does
-    not halt anything; or
-  - a single query's **billed** bytes exceed the **50 GiB** per-query ceiling,
+- **Halt rule.** The session **stops** if any of these fires:
+  - **Total ceiling breached in actuals** — accumulated billed bytes reach the
+    session's total ceiling. This is checked in **both** directions: a query may not
+    run if `predicted billed + accumulated actuals` would exceed the ceiling, and the
+    session stops if accumulated actuals reach it after a query returns. v1.3 and
+    v1.4 lacked this condition entirely, so a query could clear the pre-flight gate,
+    bill under the per-query ceiling, sit inside the divergence band, and still push
+    the running total past the total ceiling with nothing firing.
+  - **The billing rule fails** — billed bytes differ from
+    `max(10 MiB, ceil(estimate → MiB))` by more than **1 MiB**. The rule held on
+    13 of 13 measured jobs, so a failure means the cost model is wrong, and every
+    subsequent gate decision rests on it.
+  - a single query's **billed** bytes exceed the **per-query ceiling** of 4 GiB,
     whatever it was estimated at.
 
   A halt is not a finding to note and move past. The pre-flight gate is the only cost
@@ -1425,8 +1539,12 @@ no payment method attached, and the project must stay re-runnable at zero cost
   architecture session, which either re-scopes the item or accepts the unknown and
   writes it into Parts 1 and 2 as a stated limitation. Raising a ceiling, enabling
   billing, or running a query whose estimate was never taken are all forbidden.
-- **If the remaining total — in actuals — falls below 50 GiB, recon stops** and
-  reports what it has, rather than running a partial query set.
+- **If the remaining total — in actuals — falls below the per-query ceiling, the
+  session stops** and reports what it has, rather than running a partial query set.
+- **Every session keeps the ledger.** `outputs/tables/<part>_budget_ledger.csv`, in
+  A-094's columns, is a required output of each build session exactly as it was of the
+  recon. A part whose byte spend is not in a committed ledger has not accounted for
+  itself.
 
 **Output artifacts — all three, with an explicit precedence:**
 
@@ -1450,134 +1568,62 @@ figure is what it cost, and a reader who can see only one cannot tell whether th
 budget was tracked correctly. Whether that replaces or merely supplements §7.5's
 byte-identity rule for BigQuery-derived outputs is §9's open question 7.
 
-### 10.2 The recon checklist
+### 10.2 The recon checklist — executed and closed
 
-Thirteen items. Each states the **question**, the **artefact** that answers it — a
-count, a min/max, a distinct list, a null rate — and what a **problematic answer**
-would be. An item a reader cannot tell has been answered is not a recon item, so
-every item resolves to *answered*, *problematic* or *unanswered* in the findings
-document, with its artefact attached.
+Thirteen items, each stating a question, the artefact that answers it, and what a
+problematic answer would be. **All thirteen are closed**, at commit `70c5475`. The item
+texts are in v1.4 of this file and in git; what they established is below. Full
+statements of fact, with the numbers, are in the `assumptions.md` entries named.
 
-**Before Part 1 (retention and install cohorts) can be specified:**
+| # | What it established | Entry |
+|---|---|---|
+| 1 | 114 contiguous shards, 20180612–20181003, zero gaps, 5,700,000 rows, **every shard exactly 50,000 rows**, 16 weeks + 2 days | A-096 |
+| 2 | 15,175 distinct users; **4,319** with a `first_open` event; **10,856 (71.54%)** without | A-097 |
+| 3 | `event_timestamp` in microseconds; `event_date` equals its shard suffix on all 5,700,000 rows; `event_date` one day behind the UTC date on 33.96% of rows and **never ahead**; first-touch agrees with `first_open` for 99.72% of users | A-098 |
+| 4 | **`user_id` NULL on all 5,700,000 rows**; `user_pseudo_id` is the only identifier, 15,175 values | A-099 |
+| 5 | `first_open` per shard: median **38**, min 1, max 71, present in **109 of 114** shards — against item 5's threshold of 100 | A-100 |
+| 6 | **No session identifier anywhere** — not in the 52 `event_params` keys, not in the 25 `user_properties` keys. `session_start` exists (74,353 events / 12,261 users) but carries no id | A-101, A-109 |
+| 7 | ANDROID and IOS only; mobile and tablet only; **no web of any kind**; zero nulls | A-102 |
+| 8 | 207 duplicate rows on (`user_pseudo_id`, `event_name`, `event_timestamp`) — **36 ppm**, against item 8's 0.1% threshold | A-103 |
+| 9 | One purchase-shaped event, `in_app_purchase`: **27 events / 27 users**. Both §10.3 thresholds missed | A-104 |
+| 10 | **37** event names; `level_start_quickplay`, `level_complete_quickplay`, `spend_virtual_currency`, `in_app_purchase` all present; **no tutorial event of any kind** | A-105 |
+| 11 | Per-user repetition heavy (`level_start_quickplay` median 5, p90 54, 81.9% repeating). **Per-session not computable** — no session id | A-106 |
+| 12 | 13 jobs, **4.90 GiB** total; billed = `max(10 MiB, ceil(processed → MiB))` on 13/13; estimates equalled processed exactly; full-range full-column scan **3.87 GiB** | A-107 |
+| 13 | **`geo.region` 88.57% null — dropped.** `geo.country` 155 values, 0% null — **passes**. `platform`, `device.category`, `device.language`, `app_info.version` pass. `traffic_source.*` 99.4–99.9% in two buckets | A-108 |
 
-1. **Shard range.** *Question:* what is the actual `events_*` suffix range, and is
-   it contiguous? *Artefact:* the min and max suffix, the total shard count, and the
-   list of missing dates between them — taken from **table metadata, not a row
-   scan**, at no query-byte cost. *Problematic:* gaps inside the range; fewer than
-   30 shards, which cannot support a D30 cohort; or a range that does not cover
-   whole weeks, which forces a choice between a ragged window and discarding data.
-2. **`first_open` coverage.** *Question:* does every user in the window have a
-   `first_open`, and how many have events but none? *Artefact:* distinct user count,
-   distinct users with at least one `first_open`, and the difference as both a count
-   and a share. *Problematic:* more than **5%** of users without a `first_open` —
-   that population then needs a stated treatment before any install-cohort
-   definition exists, and it is the deferred "users with no install event" question.
-3. **Timestamp and timezone semantics.** *Question:* what unit and zone is
-   `event_timestamp` in, how does `user_first_touch_timestamp` relate to the
-   `first_open` event's own timestamp, and is a property-local day boundary
-   available at all? *Artefact:* confirmation of the unit; the distribution of the
-   difference between the two timestamps for users who have a `first_open` (min,
-   median, max); and whether any timezone field exists. *Problematic:* the two
-   disagreeing by more than a day for a non-trivial share of users — install day is
-   then ambiguous and D1 is not well defined without an explicit, stated choice.
-4. **Identifier.** *Question:* is `user_id` populated, or is `user_pseudo_id` the
-   only identifier? *Artefact:* the null rate of `user_id`, distinct counts of each,
-   and the ratio of distinct `user_pseudo_id` to distinct `user_id` where both
-   exist. *Problematic:* `user_id` null throughout — "a player" then means a
-   device-install, cross-device deduplication is impossible, and that limitation
-   must be stated plainly in Parts 1 and 2 rather than glossed.
-5. **Cohort granularity.** *Question:* is daily install volume large enough for day
-   cohorts, or must cohorts be weekly? *Artefact:* the `first_open` count per
-   calendar day across the window, with min, median and max. *Problematic:* a median
-   daily install count below **100** — day cohorts would then produce retention
-   curves that are mostly sampling noise, and the cohort grain becomes weekly.
-6. **Session semantics.** *Question:* is `ga_session_id` populated and stable, and
-   what engagement fields exist? *Artefact:* the null rate of `ga_session_id`, the
-   median distinct sessions per user, and the distinct list of engagement-related
-   event parameters actually present. *Problematic:* a null or constant session id —
-   "returned on day 7" must then be defined on event presence rather than on
-   sessions, which is a different definition and has to be stated as one.
-7. **Platform mix.** *Question:* what platforms are present, and does the
-   mobile-game framing hold for all rows? *Artefact:* the distinct `platform` and
-   `device.category` values with event and user counts for each. *Problematic:* a
-   material web share, or a platform field that item 13 shows to be obfuscated —
-   either way the population definition needs an explicit filter rather than an
-   assumption.
-8. **Duplicate events.** *Question:* are there duplicate event rows, and does
-   de-duplicating change any count materially? *Artefact:* total event rows versus
-   distinct rows on the natural key (`user_pseudo_id`, `event_name`,
-   `event_timestamp`), as a count and a share. *Problematic:* a duplicate share
-   above **0.1%** — every downstream count then needs a stated de-duplication step,
-   and the Part 1 and Part 2 specifications must name it rather than assume it.
+**A-095's challenge, answered.** The recon session raised that four of these items —
+3, 7, 11 and 13 — stated a problematic condition **without a number** ("a non-trivial
+share", "a material web share", "repeat heavily", and one unquantified clause) while
+the other nine carried an explicit figure. The challenge is upheld. All four are now
+closed by findings decisive enough that the missing threshold did not bite: item 3's
+disagreement is 0.28% of users, item 7 found no web traffic at all, item 11's
+repetition is 81.9%, item 13's null rates are 0% and 88.57% against a stated 50%
+test. But that is luck, not method. **The standing rule, from v1.5 onward: every
+condition stated anywhere in §10.5, §10.6 or §10.7 carries a literal number.** A
+condition a build session has to interpret is a condition the build session decides,
+which is the whole failure mode this document exists to prevent.
 
-**Additionally, before Part 2 (funnel and monetization) can be specified:**
+### 10.3 Part 2's scope is decided by item 9, by rule — and the rule has fired
 
-9. **Revenue population.** *Question:* which purchase-shaped events exist, and are
-   their revenue values actually populated rather than zero or null? *Artefact:* for
-   each candidate purchase event name — the event count, the count with a non-null
-   and strictly positive revenue value, the distinct users with at least one such
-   event, and that as a share of all users. `spend_virtual_currency` is counted
-   **separately and is explicitly not a revenue event**: it is a soft-currency sink,
-   and counting it as monetization is exactly how an unmonetized sample comes to
-   look monetized. *Problematic:* anything below the thresholds in §10.3 — this item
-   is the sole input to Part 2's scope rule, and it is evaluated once.
-10. **Event vocabulary.** *Question:* what is the complete set of event names, with
-    volumes? *Artefact:* the full distinct `event_name` list with event counts and
-    distinct-user counts, ordered by volume — **the whole list**, established
-    empirically, not a check against names expected in advance. *Problematic:*
-    nothing in particular; this item cannot fail, it can only surprise. What it must
-    settle is whether any event corresponds to a tutorial, and what the actual
-    progression events are. The sample is **reported** to use names including
-    `level_start_quickplay`, `level_complete_quickplay`, `spend_virtual_currency`
-    and `in_app_purchase`, and to contain **no tutorial event at all** — that is an
-    input to be verified by this item, never an assumption to build on. If it holds,
-    the funnel shape originally sketched for Part 2 as first_open → tutorial → first
-    purchase **does not map onto this schema**: its middle step has no referent and
-    the sketch is abandoned rather than approximated. The funnel is then defined
-    from what this item actually finds, by the architecture session, in a later
-    version. **This pass writes no funnel steps, and neither may the recon session.**
-11. **Funnel counting unit.** *Question:* should funnel steps be counted per user or
-    per session? *Artefact:* for the progression events item 10 finds — events per
-    user and events per session, median and 90th percentile, plus whether a step
-    repeats within a single session. *Problematic:* steps that repeat heavily within
-    a session — a per-session funnel would then double-count, the unit must be per
-    user, and every conversion denominator changes accordingly.
-12. **Byte cost.** *Question:* what does each query actually cost, and does the whole
-    project fit the free tier? *Artefact:* for every recon query, **the dry-run
-    estimate, the actual bytes billed, and the divergence between them** — the
-    actuals accumulated into the running total in the recon results file — plus a
-    billed-bytes figure for a full-column scan of one shard as the per-day unit cost.
-    The cost model must be built on **actuals**; an estimate-based model is not an
-    answer to this item, because §10.1's reconciliation rule exists precisely because
-    the two quantities differ. *Problematic:* a projected total that puts the Part 1
-    and Part 2 build queries plus one full re-run over the remaining monthly
-    allowance — a materialised extract table is then required to keep §7.5's
-    zero-cost re-runnability true, and that decision goes to the architecture
-    session, not to the recon session. Also problematic, and reportable in its own
-    right: a systematic divergence between estimated and billed bytes, which tells
-    the architecture session that any cost projection for Parts 1 and 2 has to be
-    built the same way.
+**Outcome, recorded before the specification that follows it.** Item 9 returned
+**27 revenue-positive `in_app_purchase` events from 27 distinct users**, against a
+§10.3 denominator of **15,175** users (A-104). Threshold 1 is missed by a factor of
+**37** (27 against 1,000); threshold 2 is missed by a factor of **2.8** (27 users =
+**0.178%**, against 0.5% = 75.9 users). Both missed, so the rule selects the
+**re-scope branch: Part 2 is a progression funnel only** (§10.6). No judgement was
+exercised at this step — the rule was written in v1.3, the denominator named in v1.4,
+and both predate the query.
 
-**Gating both parts:**
+**One qualification the re-scope statement must carry.** `event_value_in_usd` is
+**absent from 15 of the 114 shards**, and of the 27 purchase events only **24** carry
+a strictly positive value in that field while all 27 carry a positive `price`
+parameter. So the revenue count is a **lower bound**, not an exact figure, and Part 2
+must say so in those terms. It changes nothing about the outcome — 27 could be off by
+an order of magnitude and still miss 1,000 by a factor of 3 — and saying "27, and
+that is a floor" costs nothing, whereas presenting a floor as a census is the kind of
+small overclaim that a reader who knows this dataset would catch first.
 
-13. **Obfuscation, placeholders and segmentability.** *Question:* this dataset is
-    documented as **obfuscated, with placeholder and null values in some fields** —
-    which of the fields Parts 1 and 2 would rely on actually carry usable values?
-    *Artefact:* for each of `geo.country`, `geo.region`, `device.category`,
-    `device.operating_system`, `device.language`, `traffic_source.*` and
-    `app_info.version` — the null rate, the distinct-value count, and the top values
-    with their shares. *Problematic:* a field whose distinct set is a single value,
-    or is dominated by one placeholder, or whose null rate exceeds **50%**. Such a
-    field cannot support segmentation, and no amount of care downstream repairs it.
-    **Consequence, fixed now: every segmentation requirement for Part 1 or Part 2 —
-    segment-by-country included — is contingent on this item.** A segment this item
-    shows to be a placeholder is **dropped, not reported**; no Part 1 or Part 2
-    section may promise a segmentation before this item clears the field it rests
-    on; and if no field survives, Parts 1 and 2 are specified without segmentation
-    and say so in as many words. This item also feeds item 7, since the platform
-    field is one of the fields at risk.
 
-### 10.3 Part 2's scope is decided by item 9, by rule
 
 Item 9 decides whether Part 2 is *funnel and monetization* or *progression funnel
 only*. That decision is made by a rule fixed here, before the query is run, for the
@@ -1666,7 +1712,7 @@ better, adjusting the purchase-event set to clear a threshold, or counting
 fires, the observed counts and both thresholds are printed in the report, so a
 reader can see the rule was applied rather than chosen.
 
-### 10.4 Where recon stops, and the handover
+### 10.4 Where recon stopped, and the handover — completed
 
 The recon session establishes facts and **stops**. It does not write a metric
 definition, a cohort definition, a funnel step, a day boundary, or a retention
@@ -1686,18 +1732,450 @@ Handover, in order:
 3. Only then are the Part 1 and Part 2 build sessions defined in §8 and briefed.
 
 **No Part 1 or Part 2 metric definition may be written into code before the
-corresponding section exists in this file.** That rule predates v1.3 and v1.3 does
-not weaken it; specifying the recon pass is what makes it followable, because until
-now the step that produces those sections had no owner.
+corresponding section exists in this file.** That rule predates v1.3 and v1.3 did not
+weaken it; specifying the recon pass is what made it followable, because until then
+the step that produces those sections had no owner.
+
+**Handover completed, 2026-09-12.** Step 1 is done: the recon session committed its
+three artifacts at `70c5475` with all thirteen items closed, and appended A-087
+through A-111 — including A-095, a `challenge` it raised rather than resolving
+locally, answered in §10.2. It wrote no metric definition, no cohort definition, no
+funnel step and no day boundary; the gate held. Step 2 is this version: §10.5 and
+§10.6 specify Parts 1 and 2. Step 3 is done: both build sessions are defined in §8,
+sequentially, and may now be briefed.
+
+### 10.5 Part 1 — retention and install cohorts
+
+#### 10.5.1 Population: the `first_open` event, 4,319 users
+
+**Cohorts are built on the `first_open` EVENT, and Part 1's population is the 4,319
+users who have one.** Not the `first_open_time` user property.
+
+The property covers all **15,175** users (A-109) and the event covers **4,319**
+(A-097), so the property is the larger population by a factor of 3.5. It is rejected
+anyway, because its semantics are **unverified**: nothing in the recon establishes
+whether `first_open_time` is a true install timestamp or a value GA4 assigned when it
+first saw the user, and the two differ exactly where it matters — for the 10,856 users
+whose install predates the window. Building the cohort structure of a whole part on an
+unverified proxy would put every D1, D7 and D30 figure in Part 1 on ground nobody has
+checked. **A smaller defensible claim beats a larger unverifiable one**, and that
+principle decides it.
+
+**What the choice costs, stated as a cost.** Part 1 discards **71.54%** of the sample's
+users. That number is not a footnote: §10.7.2 requires it as the **first table** in
+Part 1's report, before any retention figure appears.
+
+**And the exclusion is not random.** A user with events but no `first_open` in the
+window installed before 20180612, or had the event dropped by the sampling. Either way
+the 4,319 are systematically **newer** than the 10,856, so Part 1's cohorts are a
+recent-installer slice, not a random sample of players. Retention of new installs is
+typically lower than that of an established base, so the direction of the bias is
+knowable even though its size is not — and the report says which direction.
+
+**What Part 1's D1/D7/D30 figures are and are not about.** They describe **users with
+an observed `first_open` event inside the window**. They are not about the sample's
+users generally (71.54% are absent), not about the game's player base (§10.7.1), and
+not comparable to a published retention figure for this title unless that figure uses
+the same population, which cannot be checked. Part 1 states this in those terms.
+
+#### 10.5.2 Day boundary and install day
+
+- **Day key: `event_date`.** Not a date recomputed from `event_timestamp` in UTC, and
+  not a device-local date. A-098 established that `event_date` equals its own shard
+  suffix on **all 5,700,000 rows**, that it sits one day behind the UTC date on
+  **33.96%** of rows, and that **zero** rows are ahead of it. A one-sided, consistent
+  offset is a fixed non-UTC zone, not noise — consistent with UTC−07:00, and the build
+  session **reports the offset it observes** rather than assuming that figure. No
+  metric here depends on the zone's identity; every metric depends on the key being
+  consistent, which is established.
+- **Rejected: a UTC date recomputed from `event_timestamp`.** It would split one local
+  day across two keys for a third of all rows, and it forfeits shard pruning, turning
+  every query into a full-range scan.
+- **Rejected: a device-local date** from `device.time_zone_offset_seconds` (31 distinct
+  values, non-null on every row). Defensible in principle, but it gives each user a
+  private day boundary, so "day 7" stops being one quantity, and it also forfeits
+  pruning.
+- **Cost, stated in the report:** day *N* is a property-local day, not a UTC day and
+  not the user's own local day.
+- **Install day** = the `event_date` of the user's **earliest** `first_open` event. The
+  event is near-unique — 4,322 events across 4,319 users, maximum 2 per user, 0.07%
+  repeating (A-106) — and taking the earliest makes the 3 repeat cases deterministic
+  rather than arbitrary. Install day is **day 0** and is never counted as a retention
+  day.
+
+#### 10.5.3 Retention definitions
+
+- **Primary — classic retention.** A user is retained at day *N* if they have **at
+  least one event whose `event_date` equals install day + *N* exactly**. D1, D7 and
+  D30 use *N* = 1, 7, 30.
+- **Secondary — rolling retention**, reported in its own labelled table: retained at
+  day *N* if they have at least one event with `event_date` **≥** install day + *N*.
+- Both, because they are different quantities that the literature quotes
+  interchangeably, and a reader who knows the space will ask which one this is.
+  Classic is primary because D1/D7/D30 are conventionally classic, and because rolling
+  retention at day *N* is bounded by the observation window in a way classic is not.
+  Neither may be presented without its label.
+- **Rates carry a 95% Wilson score interval.** Wilson rather than Wald, because
+  cohort denominators run from tens to thousands and Wald misbehaves at small *n* and
+  near 0 or 1; and rather than a bootstrap, because a closed-form interval on a single
+  proportion needs no seed and no resample count.
+- **Suppression rule: any cell whose denominator is below 30 is reported as a count
+  only** — no rate, no interval. At *n* = 30 a Wilson half-width around a 20% rate is
+  already about 15 pp, and a rate nobody should read is better left unprinted than
+  printed with a caveat.
+- Rates to **two decimal places** in percentage points, exact counts alongside, and
+  the **denominator printed next to every rate** (§10.7.6).
+
+#### 10.5.4 Cohort grain: weekly
+
+**Weekly.** Daily is impossible and a single pooled cohort is not a cohort analysis.
+
+- **Daily rejected on measurement grounds.** `first_open` per shard has median **38**,
+  minimum **1**, maximum **71**, and **5 of 114 shards carry none at all** (A-100),
+  against item 5's stated threshold of 100. A 38-user cohort gives a D7 rate with a
+  Wilson half-width of roughly 13 pp, and §10.5.3's suppression rule would blank a
+  large share of daily cells outright.
+- **Weekly gives ~270 installs per cohort** (4,319 over 16 weeks), where a D7 rate
+  near 20% has a Wilson half-width of about 5 pp — readable, and comparable
+  week to week.
+- **A single pooled cohort is also reported**, as the headline D1/D7/D30 figures,
+  because pooled *n* is the most stable number Part 1 has. The weekly cohorts exist
+  for the **trend**; the pooled figures are the **level**. Both appear; neither
+  replaces the other.
+- **Weeks are fixed 7-day blocks anchored at the first shard, not ISO weeks.**
+  20180612 is a Tuesday, so ISO weeks would make W01 a 4-day cohort whose denominator
+  is not comparable to any other. Anchoring at the first shard gives exactly 16 whole
+  weeks plus a 2-day remainder (A-096: 114 days, 114 mod 7 = 2).
+- **The 2-day tail, 20181002–20181003, is excluded from every cohort table**, and its
+  install count is reported as an excluded figure. Rejected: folding it into W16,
+  which would make W16 a 9-day cohort with a denominator ~29% larger than the others
+  and silently distort the trend it is there to show.
+
+#### 10.5.5 Observation-window eligibility
+
+A cohort can be measured at day *N* only if its **last** install day plus *N* falls
+inside the window, which ends 20181003. The cutoffs are therefore install day ≤
+**20181002** for D1, ≤ **20180926** for D7, and ≤ **20180903** for D30.
+
+| Cohort | Install days | D1 | D7 | D30 |
+|---|---|---|---|---|
+| W01 | 20180612–20180618 | ✓ | ✓ | ✓ |
+| W02 | 20180619–20180625 | ✓ | ✓ | ✓ |
+| W03 | 20180626–20180702 | ✓ | ✓ | ✓ |
+| W04 | 20180703–20180709 | ✓ | ✓ | ✓ |
+| W05 | 20180710–20180716 | ✓ | ✓ | ✓ |
+| W06 | 20180717–20180723 | ✓ | ✓ | ✓ |
+| W07 | 20180724–20180730 | ✓ | ✓ | ✓ |
+| W08 | 20180731–20180806 | ✓ | ✓ | ✓ |
+| W09 | 20180807–20180813 | ✓ | ✓ | ✓ |
+| W10 | 20180814–20180820 | ✓ | ✓ | ✓ |
+| W11 | 20180821–20180827 | ✓ | ✓ | ✓ |
+| W12 | 20180828–20180903 | ✓ | ✓ | ✓ |
+| W13 | 20180904–20180910 | ✓ | ✓ | — |
+| W14 | 20180911–20180917 | ✓ | ✓ | — |
+| W15 | 20180918–20180924 | ✓ | ✓ | — |
+| W16 | 20180925–20181001 | ✓ | — | — |
+| tail | 20181002–20181003 | excluded from all cohort tables |
+
+So D1 runs on 16 cohorts, D7 on 15, and D30 on 12.
+
+- **An ineligible cell is printed as explicitly null — not zero, not blank, not
+  omitted.** A cohort that cannot be observed for 30 days still appears in the D30
+  table, with its install count shown and its rate null. Omitting the row would let a
+  reader infer that only 12 cohorts exist; printing zero would be a false retention
+  figure of the worst kind.
+- **A cohort excluded at one horizon still appears at the horizons it supports.** W16
+  is in the D1 table and null in D7 and D30.
+- **The pooled figures use a different denominator per horizon** — all installs
+  eligible at that horizon — and each denominator is printed beside its rate. Pooling
+  D30 over installs that could not be observed for 30 days would be the same error as
+  printing zero.
+
+#### 10.5.6 Session-level analysis is dropped
+
+**Part 1 reports no session-level metric.** No sessions per user, no session length,
+no session-gap analysis; the originally sketched `LAG`-over-session-gaps analysis is
+dropped. The reason is not difficulty:
+
+- **No session identifier exists anywhere in this export** — not among the 52
+  `event_params` keys, not among the 25 `user_properties` keys (A-101, A-109). The
+  brief's session-gap analysis assumed a session concept the data does not carry.
+- **A `session_start` event exists but cannot stand in for one.** It marks a beginning
+  and carries no id, so attributing subsequent events to a session still requires an
+  inactivity rule — an invented definition, not a measurement. And its own volume
+  argues against trusting it: **74,353 events across 12,261 users, median 2 per user**
+  (A-106), against 5,700,000 total events. Two sessions per user cannot describe the
+  session structure of a user with hundreds of events, so even the export's own marker
+  is unreliable as a boundary.
+- **An inactivity threshold was considered and rejected.** Fixing 30 minutes — the GA4
+  default — would have been legitimate as a stated convention, but it would produce a
+  session count that is an artefact of the threshold, in a part whose other numbers
+  are measurements. Publishing both kinds side by side without distinguishing them is
+  how a case study loses a reader who knows the difference.
+- **Item 11's per-session half stays permanently unanswered** for this dataset, and
+  Part 1 says so rather than leaving the absence to be noticed.
+- Everything in Parts 1 and 2 is therefore counted **per user** or **per user-shard**.
+
+#### 10.5.7 Required outputs
+
+Committed under `outputs/tables/part1_*` and `outputs/figures/part1_*`, every number
+in the report traceable to one of them (§7.5):
+
+1. **Population reconciliation** — 15,175 total users, 4,319 with `first_open`, 10,856
+   without, 71.54%. The report's first table (§10.7.2).
+2. **Cohort inventory** — the 16 weeks with install counts, plus the excluded tail
+   count, plus per-horizon eligibility exactly as §10.5.5 fixes it.
+3. **Classic retention, weekly** — D1/D7/D30 by cohort, with counts, rates, Wilson
+   intervals, denominators, and nulls where ineligible.
+4. **Classic retention, pooled** — D1/D7/D30 with per-horizon denominators.
+5. **Rolling retention** — the same two shapes, separately labelled.
+6. **Retention by segment** — pooled only, per §10.7.5.
+7. **Data-handling record** — duplicate rows removed, users with non-constant
+   `geo.country`, and the `first_open_time` sensitivity check of §10.7.3.
+8. **Budget ledger** — `outputs/tables/part1_budget_ledger.csv` (§10.1).
+
+### 10.6 Part 2 — progression funnel
+
+#### 10.6.1 Scope
+
+**A progression funnel only.** §10.3's rule fired on item 9's counts: 27 revenue-positive
+purchase events from 27 users, missing the event threshold by 37× and the coverage
+threshold by 2.8×. Part 2 is therefore **not** titled, introduced, or summarised as
+monetization anywhere — not in the report, not in its filename
+(`reports/part2_progression_funnel.md`), not in the README, not in a chart title.
+
+**The required re-scope statement** appears at the head of Part 2's report and says all
+of: that this sample does not support revenue analysis; the observed figures, 27 events
+from 27 users being **0.178%** of the 15,175-user denominator against a 0.5% bar; and
+that **27 is a lower bound rather than an exact count**, because `event_value_in_usd` is
+absent from **15 of the 114 shards** and only 24 of the 27 events carry a positive value
+in it, while all 27 carry a positive `price` parameter. The floor framing costs nothing
+and matters: 27 could be wrong by an order of magnitude and still miss 1,000 by a
+factor of 3, so nothing rests on precision here — but presenting a floor as a census is
+exactly the small overclaim a reader who knows this dataset catches first.
+
+**`spend_virtual_currency` is not revenue** (9,363 events / 2,044 users). It is a
+soft-currency sink and may not be presented, charted, or summarised as monetization,
+spend, or purchase behaviour.
+
+#### 10.6.2 Population and counting unit
+
+- **Population: all 15,175 distinct `user_pseudo_id` values** with at least one event in
+  the shard range. Not Part 1's 4,319.
+- **Why not the install cohort.** A funnel step must be reachable by everyone in the
+  denominator. Starting at `first_open` would either restrict Part 2 to 28.46% of the
+  sample — duplicating Part 1's limitation for no new insight — or produce a
+  non-monotone funnel, since **10,166** users started a level while only **4,319** have
+  a `first_open`. Part 2's question is progression through content, not acquisition.
+- **`first_open` is therefore not a funnel step.** The funnel begins at "present in the
+  window".
+- **Counting unit: per user.** Per-event is rejected outright:
+  `level_start_quickplay` has median 5 events per user, 90th percentile 54, maximum
+  24,641, with **81.9%** of its users recording more than one (A-106). A per-event
+  funnel would count one heavy player hundreds of times and call it conversion.
+- **Per-session is not available** — no session identifier exists (§10.5.6), so item
+  11's per-session half is unanswered and Part 2 says so.
+
+#### 10.6.3 The funnel steps
+
+Four steps, fixed here, from the 37 event names item 10 established (A-105). Raw
+per-user counts from the recon are given so the build session can check its own
+arithmetic against a known figure:
+
+| Step | Definition | Users (recon) | Share of 15,175 |
+|---|---|---|---|
+| **S0** | Present in the window — at least one event of any kind | 15,175 | 100.00% |
+| **S1** | Started a level — at least one `level_start_quickplay` | 10,166 | 66.99% |
+| **S2** | Finished a level attempt — at least one `level_end_quickplay` | 8,168 | 53.83% |
+| **S3** | Completed a level — at least one `level_complete_quickplay` | 5,676 | 37.40% |
+
+**The sketched funnel is abandoned, not approximated.** first_open → tutorial → first
+purchase has no referent here: there is **no tutorial event of any kind** among the 37
+names, `first_open` covers only 28.46% of users, and 27 purchase events cannot carry a
+funnel step. No event is substituted for the missing tutorial step — substituting one
+would preserve a shape chosen before the schema was known, which is the wrong thing to
+preserve.
+
+**`in_app_purchase` may not be a funnel step.** At 27 users, 0.178%, a final step
+supports no comparison between any two groups.
+
+#### 10.6.4 Strict counts, raw counts, and out-of-order users
+
+- **The funnel is strict.** Step *k*'s population is users who have **all** of S0…S*k*,
+  not users who have S*k*. Monotonicity then holds by construction rather than by luck.
+- **Both are reported**: the strict cumulative count and the raw per-step count from
+  §10.6.3, side by side, in the same table.
+- **Out-of-order users are counted and reported** — users with S2 but not S1, or S3 but
+  not S2. A share **above 1.0%** of the step's raw population is a reported finding with
+  a stated interpretation, not a number to reconcile away: in an event log it usually
+  means an event was dropped by sampling or emitted without its predecessor, and either
+  is worth a reader's attention.
+- **Step-to-step conversion is reported on the strict population**, with the denominator
+  printed beside every rate, and a **95% Wilson interval** on each rate (§10.5.3's
+  reasoning applies unchanged).
+
+#### 10.6.5 Diagnostic events — reported, never steps
+
+These are reported once in a labelled table with their event and user counts, and are
+**not** funnel steps, because none of them is a progression stage:
+
+| Event | Events | Users | Why not a step |
+|---|---|---|---|
+| `screen_view` | 2,247,623 | 14,077 | UI navigation, not progression |
+| `user_engagement` | 1,358,958 | 13,588 | A heartbeat, not an action |
+| `session_start` | 74,353 | 12,261 | App-open, and unreliable: median 2 per user against 5.7M events (§10.5.6) |
+| `post_score` | 242,051 | 8,580 | Score submission, parallel to progression |
+| `level_fail_quickplay` | 137,035 | 6,343 | The failure branch of an attempt, not a stage beyond it |
+| `spend_virtual_currency` | 9,363 | 2,044 | Economy action, and explicitly not revenue (§10.6.1) |
+| `in_app_purchase` | 27 | 27 | Coverage 0.178%; see §10.6.1 |
+
+**One required reconciliation.** `level_end_quickplay` shows 349,729 events while
+`level_complete_quickplay` plus `level_fail_quickplay` sum to 328,123 — a shortfall of
+21,606 events, **6.18%** of `level_end_quickplay`. Part 2 reports this reconciliation at
+both event and user level. A shortfall **above 1.0%** is a finding with a stated
+interpretation — a third outcome type, or ends emitted without an outcome — and it is
+**not** silently reconciled, and not used to redefine S2.
+
+#### 10.6.6 Required outputs
+
+Committed under `outputs/tables/part2_*` and `outputs/figures/part2_*`:
+
+1. **The funnel** — S0…S3 with strict and raw counts, conversion rates, Wilson
+   intervals, denominators.
+2. **Out-of-order users** — counts and shares per step.
+3. **Diagnostic events** — the table in §10.6.5, regenerated rather than transcribed.
+4. **The `level_end` reconciliation** — event and user level.
+5. **Funnel by segment** — per §10.7.5.
+6. **Data-handling record** — duplicate rows removed, plus the re-scope figures.
+7. **Budget ledger** — `outputs/tables/part2_budget_ledger.csv` (§10.1).
+
+---
+
+### 10.7 What both parts owe the reader
+
+#### 10.7.1 The downsampling disclosure
+
+**Every shard holds exactly 50,000 rows** (A-096). That uniformity is not traffic; it is
+a sampling cap. Both reports carry this as a top-level section, and the README carries
+one sentence of it:
+
+- Parts 1 and 2 describe a **50,000-events-per-day sample** of this property, not the
+  game's player base.
+- **No absolute count may be presented as a measure of real traffic** — not installs per
+  week, not users, not events per day.
+- **No growth or trend claim may be made from volume.** A rise in installs per week
+  across the 16 cohorts is a change in what the sample captured, not a change in
+  acquisition. Rates within a cohort are the only quantities the sample supports.
+- **The sampling fraction per day is unknown and may not be uniform**, so even
+  comparisons of *rates* across weeks could be affected if the sample was drawn
+  differently on different days. This is unresolvable from the data and belongs in each
+  report's negative-results section, not in a hedge attached to one chart.
+
+#### 10.7.2 Required report structure
+
+Each report opens with, in this order: the **population reconciliation** table, the
+**downsampling disclosure**, then its results. Part 2 adds the §10.6.1 re-scope
+statement before its results.
+
+Each report ends with a **"What this does not support"** section, in the shape §6
+requires of Part 3 — placed after the results and before any recommendation, not a
+caveats footnote — covering at minimum: what the 50,000-row cap forbids (§10.7.1); for
+Part 1, the 71.54% exclusion, its non-random direction, and what the figures are not
+about (§10.5.1); for Part 2, that no revenue question is answerable and no session
+question is answerable; the absence of any cross-device identity (§10.7.3); and for
+each, what measurement would be required to answer the question properly — naming the
+measurement, never "further research is needed".
+
+#### 10.7.3 Identity, and the `first_open_time` sensitivity check
+
+- **`user_id` is NULL on all 5,700,000 rows** (A-099). `user_pseudo_id` is the only
+  identifier, so **"a user" means a device-install throughout both parts**. One person
+  on two devices is two users; a reinstall may be a new user. **No cross-device claim,
+  no unique-people claim, and no deduplication of people is possible** — and both
+  reports say so rather than using the word "users" as if it meant people.
+- **Part 1 must attempt one sensitivity check and report the outcome either way.**
+  Derive install day from the `first_open_time` user property for all 15,175 users and
+  recompute pooled D7. **Run the check only if** `first_open_time`'s derived date equals
+  the `first_open` event's `event_date` for **≥ 99.0%** of the 4,319 users who have
+  both — otherwise the property's semantics are not established even for the
+  overlapping population, the check is **omitted**, and the observed agreement share is
+  reported instead. When it runs, the figure goes in the negative-results section,
+  labelled as a robustness check on an unverified field, with the agreement share beside
+  it. It never appears in a results table and never becomes a headline. It exists to
+  answer one question a reader will ask — what does discarding 71.54% cost — and it
+  cannot answer it authoritatively, which is why its placement is fixed.
+
+#### 10.7.4 Duplicate rows
+
+**De-duplicate on (`user_pseudo_id`, `event_name`, `event_timestamp`) before any count,
+in both parts, and report the 207 rows removed** (A-103, 36 ppm).
+
+This is the opposite of Part 3's rule, and deliberately so. §5.1 keeps a suspicious row
+because removing it after randomisation breaks intention-to-treat. There is no
+randomisation and no ITT here: a duplicated log row is not an observation of anything,
+and while 36 ppm cannot move a rate, distinct-user counts and per-user event counts are
+both sensitive to exact duplication. The contrast is stated in each report so it does
+not read as an inconsistency between parts.
+
+#### 10.7.5 Segmentation
+
+**Permitted dimensions** (A-108): `geo.country` (155 values, 0% null), `platform`
+(2 values, 0% null), `device.category` (2 values, 0% null), `device.language`
+(229 values, 0% null), `app_info.version` (34 values, 0% null).
+
+**Dropped: `geo.region`** — 88.57% null, failing item 13's 50% test.
+
+**Dropped: `traffic_source.name`, `.medium`, `.source`** — they pass the null and
+distinct-count tests but are **99.91%, 99.79% and 99.39%** concentrated in two buckets,
+one of which is a placeholder (`(direct)`, `(none)`) in each case. A dimension with
+essentially one real bucket cannot distinguish cohorts: any segment difference would
+compare under 1% of events against the rest and read as acquisition analysis while
+being noise. **Traffic source is reported once, as a single descriptive line stating the
+concentration, to document why it is not segmented** — and no metric is segmented by it.
+
+Rules, all numeric:
+
+- **Attribution is by the user's earliest event row**, ties broken by lowest
+  `event_timestamp` then by alphabetically lowest `event_name`. One deterministic rule
+  for both parts.
+- **Report the share of users whose `geo.country` is not constant** across their events.
+  Above **5.0%**, country segmentation is reported with a caveat naming the share;
+  above **25.0%**, country segmentation is **dropped**.
+- **Segment floors.** Part 1: a segment is reported individually only with **≥ 100
+  users** in the eligible install population (of 4,319). Part 2: **≥ 200 users** at S0
+  (of 15,175) — S3 retains 37.40%, so 200 at entry leaves about 75 at the last step,
+  which is the smallest final cell worth printing.
+- **Below the floor, segments are pooled into one "Other (n segments)" row** with its
+  own count. Never dropped silently, never reported individually.
+- **Segmentation applies to pooled cohorts only, never crossed with the weekly
+  cohorts.** 4,319 installs over 16 weeks and 5 countries is about 54 users per cell,
+  below §10.5.3's suppression floor for most cells.
+
+#### 10.7.6 Numbers and reproducibility
+
+§7.5's reproducibility rules and A-080's provenance rule apply unchanged, with three
+part-specific points:
+
+- **Every rate carries its denominator**, printed adjacent, and every rate below a
+  denominator of 30 is suppressed to a count (§10.5.3).
+- **Rates to two decimal places** in percentage points; exact counts as integers; no
+  significance stars anywhere (A-031).
+- **Every number in prose traces to a committed table.** BigQuery-derived outputs are
+  exempt from cross-machine byte-identity and carry a provenance sidecar instead
+  (A-080, A-093); §9's open question 7 stays open, and item 12's measured figures —
+  metadata predicting billed bytes to MiB rounding, 3.87 GiB for the whole table — now
+  make a checksummed materialised extract affordable enough to be worth revisiting when
+  both parts are done.
 
 ---
 
 ## 11. Document control
 
-- **Version:** 1.3. **Written:** 2026-09-10, before any data access. **Amended:**
-  2026-09-10 (v1.1, then v1.2), both before any data access and before the
-  repository was initialised; 2026-09-11 (v1.3), after Part 3 was completed and
-  committed, touching nothing inside §1–§6.
+- **Version:** 1.5. **Written:** 2026-09-10, before any data access. **Amended:**
+  2026-09-10 (v1.1, then v1.2), both before any data access and before the repository
+  was initialised; 2026-09-11 (v1.3 and v1.4), after Part 3 was completed and
+  committed; 2026-09-12 (v1.5), after the recon completed at `70c5475`. No version
+  after v1.2 touches §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -1936,3 +2414,106 @@ now the step that produces those sections had no owner.
   question 7 remains open by design: the byte-identity decision for BigQuery-derived
   outputs waits for item 12's figures, and v1.4 strengthens the input to that decision
   by making those figures actuals rather than estimates.
+
+### v1.5 — 2026-09-12
+
+- **Sections touched:** header, §7.1, §8, §9, §10 (retitled; §10.1–§10.4 revised,
+  §10.5–§10.7 new), §11. **None inside §1–§6.**
+- **Substantive change:**
+  - **§10 retitled** from *deferred, pending dataset recon* to *specification*, with the
+    v1.0–v1.4 deferral paragraph kept as the standard the new sections answer to. The
+    recon is complete at `70c5475`; §10 now points at its artifacts and states that the
+    CSVs are the source of truth for every number quoted.
+  - **§10.5 (new) — Part 1 fully specified.** Cohorts on the **`first_open` event**,
+    population **4,319** users, not the `first_open_time` property whose semantics are
+    unverified; the **71.54%** exclusion recorded as a cost, its non-random direction
+    stated, and what the figures are and are not about. Day key **`event_date`** with
+    UTC-recomputed and device-local dates both rejected and the reasons given; install
+    day the **earliest** `first_open`. **Classic retention primary** (exactly install +
+    N), rolling secondary, **95% Wilson** intervals, cells below **n = 30** suppressed
+    to counts. **Weekly cohorts** — daily rejected on median 38 installs per shard —
+    in **16 fixed 7-day blocks anchored at the first shard**, with the **20181002–03
+    tail excluded** and the pooled cohort reported alongside as the level to the weekly
+    trend. Eligibility cutoffs fixed at **20181002 / 20180926 / 20180903**, giving
+    D1 on 16 cohorts, D7 on 15, D30 on 12, with ineligible cells **printed as null,
+    never zero or omitted** and per-horizon pooled denominators.
+  - **§10.5.6** — **session-level analysis dropped**, because no session identifier
+    exists in either key space and `session_start`'s median of 2 per user against 5.7M
+    events makes even the export's own marker unusable. A 30-minute inactivity
+    threshold was considered and rejected as an invented definition sitting among
+    measurements. The brief's `LAG`-over-session-gaps analysis is dropped and item 11's
+    per-session half is permanently unanswered.
+  - **§10.6 (new) — Part 2 fully specified** as a **progression funnel only**, the
+    report renamed `part2_progression_funnel.md` because a filename is a title.
+    Population **all 15,175** users and counting **per user** — per-event rejected on
+    A-106's 81.9% repetition. Four steps fixed: **S0 present (15,175) → S1
+    `level_start_quickplay` (10,166) → S2 `level_end_quickplay` (8,168) → S3
+    `level_complete_quickplay` (5,676)**, strict cumulative with raw counts beside
+    them, out-of-order users above **1.0%** a reported finding, and the
+    **`level_end` vs complete+fail shortfall of 6.18%** reconciled rather than
+    absorbed. The sketched first_open → tutorial → purchase funnel is **abandoned, not
+    approximated**; `in_app_purchase` may not be a step at 0.178% coverage; seven
+    events are named as diagnostics that are explicitly not steps.
+  - **§10.7 (new) — shared obligations.** The **50,000-rows-per-shard downsampling
+    disclosure**, with no absolute count and no volume trend claim permitted. A
+    **"What this does not support"** section required in both reports, in §6's shape.
+    Identity: `user_id` NULL on all rows, so **"a user" means a device-install** and no
+    cross-device claim is possible. A **required `first_open_time` sensitivity check**
+    on pooled D7, gated on **≥ 99.0%** date agreement for the overlapping population
+    and confined to the negative-results section. **De-duplicate the 207 rows**, with
+    the deliberate contrast against §5.1's keep-the-row rule explained. Segmentation:
+    `geo.country`, `platform`, `device.category`, `device.language`, `app_info.version`
+    permitted; **`geo.region` dropped** at 88.57% null; **`traffic_source.*` dropped**
+    at 99.4–99.9% two-bucket concentration, reported once to document why; attribution
+    by earliest event row; country segmentation caveated above **5.0%** non-constancy
+    and dropped above **25.0%**; segment floors of **100** users (Part 1) and **200**
+    at S0 (Part 2), sub-floor segments pooled into one "Other" row; and segmentation
+    **never crossed with weekly cohorts**, at about 54 users per cell.
+  - **§10.1 — ceilings reset from measurement.** The old 50 GiB / 200 GiB rested on a
+    cost model item 12 disproved: the 10 MiB minimum is **per query, not per shard**, a
+    114-shard wildcard billed **274 MiB**, and the whole recon spent **4.90 GiB of
+    200 GiB**. New ceilings, carried forward to the build sessions: **4 GiB per query**
+    (a full-column scan of the entire table costs 3.87 GiB, so nothing legitimate can
+    trip it), **20 GiB per build session**, **40 GiB for both**. The divergence band
+    becomes a **prediction** — billed = `max(10 MiB, ceil(estimate → MiB))`, which held
+    on 13 of 13 jobs — and **the missing halt condition is added**: accumulated actuals
+    breaching the session's total ceiling, checked both before a query (predicted plus
+    accumulated) and after it. Under v1.3 and v1.4 a query could pass the pre-flight
+    gate, bill under the per-query ceiling, stay inside the divergence band, and still
+    push the total past the ceiling with nothing firing. A budget ledger is now a
+    required output of every session.
+  - **§10.2 — checklist closed**, its thirteen item texts replaced by a
+    what-it-established table pointing at A-096–A-109. **A-095's challenge upheld**:
+    four items stated a problematic condition without a number, and although all four
+    closed on findings decisive enough that it did not bite, the standing rule from
+    v1.5 is that **every condition in §10.5–§10.7 carries a literal number**.
+  - **§10.3 — the rule fired**, recorded with its arithmetic: 27 events against 1,000
+    (37× short) and 0.178% against 0.5% (2.8× short). Added requirement that the
+    re-scope statement present 27 as a **lower bound**, since `event_value_in_usd` is
+    absent from 15 of 114 shards and only 24 of 27 events carry a positive value in it.
+  - **§10.4** — handover recorded as completed, including that the recon session raised
+    A-095 as a `challenge` rather than resolving it locally, and wrote no definition.
+  - **§8 — three fixes.** Grants and prohibitions are now expressed **by path prefix,
+    never by extension**, closing the gap that left `.meta.json` sidecars and the budget
+    ledger between `recon_*.csv` and "does not begin `recon_`". The **dependency rule**
+    is scoped: a session may add a dependency only if resolution leaves every existing
+    pin unchanged, because a moved pin silently breaks a completed part's clean-checkout
+    guarantee — with A-087's `bq`-CLI precedent named as the preferred pattern. And the
+    **Part 1 and Part 2 build sessions are defined** with explicit path lists: two
+    sessions, run **sequentially**, each owning only its own README heading, neither
+    touching the opener, with shared `60`–`89` SQL copy-never-modify and a ban on
+    concurrent runs so A-083's re-read rule remains sufficient.
+  - **§7.1** — tree updated: `run_part1.sh`, `run_part2.sh`, the `sql/` ranges, the
+    recon report, and `part2_progression_funnel.md`.
+  - **§9** — **open question 8 added**: whether the README's three-sentence opener
+    should become project-level, defaulting to *no, it stays Part 3's and no build
+    session may touch it* (A-118).
+- **assumptions.md:** added **A-112 through A-130**. Partially superseded by named
+  field: A-076 (`Decision`, by A-127), A-082 (`Decision`, by A-129), A-085
+  (`Decision`, by A-126). Status lines annotated on all three.
+- **Touched §1–§6:** **No.** Every change is in the header, §7.1, §8, §9, §10 or §11.
+  **Part 3's pre-registration freeze is untouched** — it attached at v1.2, commit
+  `c6d72f83`, Part 3 is complete, and its report cites that commit. §10.7.4's
+  de-duplication rule deliberately differs from §5.1's keep-the-row rule and does not
+  amend it: §5.1 governs Part 3 only, and the contrast is explained where the new rule
+  is stated.

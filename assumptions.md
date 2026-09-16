@@ -976,7 +976,7 @@ cohort, funnel step or day boundary — that is the point of A-076's gate.
 - **Kind:** decision
 - **Part:** project-wide
 - **Date:** 2026-09-11
-- **Status:** active
+- **Status:** active — `Decision` field superseded by A-127
 - **Decision:** Assign the GA4 recon pass to a **dedicated recon session**, separate from the completed Part 3 session and from the future Part 1 and Part 2 build sessions, with the path list in `ARCHITECTURE.md` §8: it owns `sql/00_recon_*` through `sql/09_recon_*`, `src/recon/**`, `outputs/tables/recon_*.csv`, `reports/recon_ga4_sample.md`, a `## Dataset recon` README section, append-only access to `requirements*.txt` and `.gitignore`, and — uniquely — BigQuery access configuration under user application-default credentials with no credential file ever committed; and it is forbidden every Part 3 path, every `sql/` range outside `00`–`09`, every Part 1 and Part 2 path, and `ARCHITECTURE.md` itself. The gate is a content prohibition as well as a path one: **no metric definition, cohort definition, funnel step, day boundary or retention window**, in SQL, Python, prose, comments, drafts or "suggested" sections.
 - **Alternatives rejected:** Giving recon to the Part 1 build session — it would mean a session that has just seen the shard ranges, null rates and event volumes is then asked to write the metric definitions, which is choosing definitions with the answers in front of it; separating the two makes the handover through the architecture session structural instead of a matter of discipline, for the same reason A-034 keeps `ARCHITECTURE.md` read-only to implementation sessions. Extending the Part 3 session — it is complete, committed, and cites a frozen pre-registration, and A-034 forbids it BigQuery access for a reason that has not changed. Leaving the owner unstated, as v1.0 through v1.2 did — the step gating two-thirds of the project was assigned to nobody, which is how a project stalls without anyone noticing which rule was the blocker. Letting the architecture session run the queries itself — it would then be both the party that establishes the facts and the party that writes the specification from them, which is the separation this whole document exists to maintain.
 - **Reason:** The recon's value is that it produces facts nobody chose. That only survives if the session producing them cannot also use them, and path lists plus a content gate are what make "cannot" different from "should not".
@@ -1042,7 +1042,7 @@ cohort, funnel step or day boundary — that is the point of A-076's gate.
 - **Kind:** decision
 - **Part:** project-wide
 - **Date:** 2026-09-11
-- **Status:** active
+- **Status:** active — `Decision` field superseded by A-129
 - **Decision:** Restate §10's twelve questions as a thirteen-item checklist in which every item names its **question**, the exact **artefact** that answers it (a count, a min/max, a distinct list, a null rate), and what a **problematic answer** would be, resolving in the findings document to *answered*, *problematic* or *unanswered*. Item 10 establishes the event vocabulary **empirically** — the full distinct list with volumes — and treats the reported names (`level_start_quickplay`, `level_complete_quickplay`, `spend_virtual_currency`, `in_app_purchase`, and no tutorial event) as an input to verify rather than build on; if that holds, the funnel sketched as first_open → tutorial → first purchase has no referent for its middle step and is **abandoned rather than approximated**, with the real funnel defined by the architecture session from what item 10 finds. **Item 13 added**: the dataset is documented as obfuscated with placeholder and null values, so per-field null rates and distinct-value profiles are established for every field Parts 1 and 2 would rely on, and **every segmentation requirement — segment-by-country included — is contingent on it**; a field whose distinct set is a single value, is dominated by a placeholder, or is more than 50% null cannot support segmentation, such a segment is dropped rather than reported, and if no field survives, Parts 1 and 2 are specified without segmentation and say so.
 - **Alternatives rejected:** Keeping the twelve as prose questions — an item a reader cannot tell has been answered is not a recon item, and a list of questions with no named artefact gets marked done by a session that read the schema and formed an impression. Trusting the reported event names and specifying the funnel now — they are second-hand, this pass is explicitly barred from writing funnel steps, and a funnel pre-registered against names that turn out not to exist is the failure §10's opening paragraph warns about. Approximating the sketched tutorial step with the nearest available event — it would preserve a funnel shape chosen before the schema was known, which is the wrong thing to preserve. Leaving obfuscation to be discovered during the build — a segmentation promised in a specification and then quietly dropped in the report is worse than one never promised.
 - **Reason:** A checklist is only a gate if each item has a pass condition someone else can check. Naming the artefact converts twelve topics into thirteen answerable questions, and naming the problematic answer in advance means a bad finding is recognised as one rather than absorbed.
@@ -1083,7 +1083,7 @@ immediately before appending, per A-083: the highest heading present was A-083.
 - **Kind:** supersedes A-078
 - **Part:** project-wide
 - **Date:** 2026-09-11
-- **Status:** active
+- **Status:** active — `Decision` field superseded by A-126
 - **Supersedes scope:** the `Decision` field of A-078. Both ceilings are unchanged at 50 GiB per query and 200 GiB total, as is the mandatory pre-flight dry run, the metadata-only shard inventory, the narrow-or-record-unanswered rule, and the prohibition on raising a ceiling or enabling billing. What changes is which quantity the running total is kept in, plus the halt rule.
 - **Decision:** Keep the pre-flight gate exactly as it was — the estimate is the only number available before execution, so it authorises the query and is used for nothing else. After each query executes, read the **actual bytes billed** and bytes processed from the job statistics, record them in the recon results file beside the estimate together with the divergence as both an absolute figure and a ratio, and accumulate the **actuals** into the running total. Every divergence is a finding, in both directions, on every query. **Halt the pass** if a single query's billed bytes exceed its estimate by more than **2×** *and* by more than **10 GiB** absolute — both conditions required — or if a single query's billed bytes exceed the **50 GiB** per-query ceiling whatever it was estimated at. An under-billing divergence never halts. Stop the pass if the remaining total in actuals falls below 50 GiB.
 - **Alternatives rejected:** Tracking estimates only, as A-078 did — the sandbox allowance is consumed by bytes billed, and the two quantities are not the same: BigQuery bills a minimum per table referenced regardless of estimate, which for a wildcard query touching many shards can dominate a cheap query outright, and for `_TABLE_SUFFIX`-filtered wildcards the predicted and billed bytes diverge depending on how shard pruning resolves. A pass could believe it had spent 180 GiB while the account recorded materially more or materially less, and in the first case the overrun would be discovered by the build queries failing. Recording actuals but keeping the total in estimates — it would put the real number in the file and then not use it, which is worse than not measuring. A ratio-only halt trigger — the per-table minimum makes a small query routinely exceed its estimate by a large multiple, so a ratio alone would halt the pass on a query that cost nothing. An absolute-only trigger — it would miss a systematic planning failure on small queries that predicts a large one. Treating a big divergence as a finding and continuing — see the reason below. Raising a ceiling to absorb an overrun — already forbidden by A-078 and still forbidden.
@@ -1418,3 +1418,223 @@ checklist item.
 - **Reason:** The planned order was written before any query had run and rested on an assumption about where revenue lives that query 01 falsified. Reordering is what §10.1's dry-run-then-execute loop is for: each query informs the next, and a pass that cannot re-sequence on what it learns is not recon. Recording it matters because the approved plan states a different order, and a reader comparing plan to repository should find the difference already explained rather than have to infer it.
 - **Affects:** The file numbering in `sql/`; item 9's artefact, which is materially more complete for the change (27 revenue-positive events rather than 24); the order the README documents for a reproducer.
 - **Falsifiable by:** Not applicable — the pass ran in the order recorded here, and the numbering matches it.
+
+---
+
+## Amendment pass — `ARCHITECTURE.md` v1.5 (2026-09-12)
+
+Parts 1 and 2 specified from the recon findings. IDs allocated by re-reading this file
+per A-083: the highest heading present was A-111. Nothing in §1–§6 is touched; Part 3's
+freeze at v1.2 / `c6d72f83` stands.
+
+### A-112 — Part 1 cohorts are built on the `first_open` event, population 4,319
+- **Kind:** decision
+- **Part:** 1
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Build Part 1's install cohorts on the **`first_open` event**, restricting Part 1's population to the **4,319** users who have one (A-097), and not on the `first_open_time` user property that covers all 15,175 (A-109). Record the **71.54%** exclusion as a cost, disclose it as the first table of Part 1's report, state that the exclusion is **not random** — a user without `first_open` in the window installed before 20180612 or lost the event to sampling, so the 4,319 are systematically newer — and state that the resulting D1/D7/D30 figures describe users with an observed install event, not the sample's users generally and not the game's player base.
+- **Alternatives rejected:** `first_open_time` over all 15,175 users — 3.5× the population, but its semantics are **unverified**: nothing in the recon establishes whether it is a true install timestamp or a value GA4 assigned when it first saw the user, and those differ exactly for the 10,856 users whose install predates the window, which is the population the property would be used to add. Using both and presenting whichever looks better — the failure mode this document exists to prevent. Using the property for cohorts and the event as a check — it inverts the reliability ordering, putting the unverified field in the headline. Abandoning install cohorts and reporting activity only — it discards the one question Part 1 exists to answer.
+- **Reason:** A smaller defensible claim beats a larger unverifiable one. Every D1, D7 and D30 figure in Part 1 inherits the cohort definition, so an unverified proxy at that position puts the whole part on ground nobody has checked — and the cost of the alternative is fully disclosable, which an unverifiable foundation is not.
+- **Affects:** §10.5.1; every Part 1 denominator; the required first table; the sensitivity check in A-123, which exists to quantify what this exclusion costs.
+- **Falsifiable by:** Establishing `first_open_time`'s semantics — the 99.0%-agreement test in A-123 is the cheapest available probe, and passing it would justify revisiting this decision in a later version rather than mid-build.
+
+### A-113 — The day key is `event_date`, and install day is the earliest `first_open`
+- **Kind:** decision
+- **Part:** 1
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Define every day boundary on **`event_date`**, and install day as the `event_date` of the user's **earliest** `first_open` event, with install day as **day 0** and never a retention day. The build session **reports the UTC offset it observes** rather than assuming one; no metric depends on the zone's identity.
+- **Alternatives rejected:** A date recomputed from `event_timestamp` in UTC — it splits one local day across two keys for the 33.96% of rows where `event_date` is one day behind UTC (A-098), and it forfeits shard pruning, turning every query into a full-range scan. A device-local date from `device.time_zone_offset_seconds` (non-null on every row, 31 distinct values) — defensible in principle, but it gives every user a private day boundary so "day 7" stops being a single quantity, and it also forfeits pruning. Taking the latest `first_open` for the 3 users with two — arbitrary in the other direction; earliest is the install.
+- **Reason:** `event_date` equals its own shard suffix on **all 5,700,000 rows** and is one day behind UTC on a third of them with **zero** rows ahead, which is the signature of a fixed non-UTC zone rather than noise. A consistent key that is also the partition key is the right basis for a day boundary; naming the zone is unnecessary, since consistency is what the metrics need and consistency is what the recon established.
+- **Affects:** §10.5.2; D1, D7 and D30; §10.5.5's eligibility cutoffs; query cost, through pruning.
+- **Falsifiable by:** `event_date` disagreeing with its shard suffix on any row, which A-098 measured at zero.
+
+### A-114 — Classic retention is primary, rolling is secondary, with Wilson intervals and an n = 30 floor
+- **Kind:** decision
+- **Part:** 1
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Primary metric: **classic retention** — retained at day *N* if the user has at least one event whose `event_date` equals install day + *N* **exactly**, for *N* = 1, 7, 30. Secondary, in its own labelled table: **rolling retention** — at least one event with `event_date` **≥** install day + *N*. Every rate carries a **95% Wilson score interval** and its denominator; any cell with a denominator **below 30** is reported as a count only, with no rate and no interval. Rates to two decimal places in percentage points.
+- **Alternatives rejected:** Reporting only one of the two — they are different quantities that the literature quotes interchangeably, and a reader who knows the space will ask which this is; reporting both costs two tables. Rolling as primary — it is bounded by the observation window in a way classic is not, so it is less comparable across cohorts. Wald intervals — they misbehave at small *n* and near 0 or 1, and cohort denominators here run from tens to thousands. Bootstrap intervals — a closed-form interval on a single proportion is exact enough and avoids a seed and a resample count for no gain. No suppression floor — at *n* = 30 a Wilson half-width around a 20% rate is already about 15 pp, and a rate nobody should read is better unprinted than printed with a caveat.
+- **Reason:** D1/D7/D30 are conventionally classic, so the primary should be what a reader assumes unless told otherwise; and the interval plus denominator plus floor together stop a small-cohort rate from being read as a measurement.
+- **Affects:** §10.5.3; every Part 1 rate; the weekly tables, where small cohorts make the floor bite; §10.7.5's decision not to cross segments with cohorts.
+- **Falsifiable by:** Not applicable — both definitions are reported, so no reading is foreclosed.
+
+### A-115 — Cohorts are weekly, in 16 fixed blocks anchored at the first shard, with the 2-day tail excluded
+- **Kind:** decision
+- **Part:** 1
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Use **weekly** install cohorts: 16 fixed 7-day blocks anchored at 20180612, W01 = 20180612–20180618 through W16 = 20180925–20181001, with installs on the **20181002–20181003 tail excluded from every cohort table** and their count reported. Also report a **single pooled cohort** as the headline D1/D7/D30 figures, with the weekly cohorts carrying the trend.
+- **Alternatives rejected:** Daily cohorts — `first_open` per shard has median **38**, minimum 1, maximum 71, and **5 of 114 shards carry none** (A-100), against item 5's threshold of 100; a 38-user cohort gives a D7 Wilson half-width near 13 pp and A-114's floor would blank many cells outright. A single pooled cohort only — it is the most stable number available but it is not a cohort analysis, and it cannot show whether retention moved across the window. ISO weeks — 20180612 is a Tuesday, so W01 would be a 4-day cohort whose denominator is incomparable to every other. Folding the 2-day tail into W16 — it would make W16 a 9-day cohort with a denominator about 29% larger than its neighbours, distorting the very trend the weekly grain exists to show. Fortnightly cohorts — 8 cohorts of ~540 is stabler still, but it halves the trend resolution for a precision gain the Wilson intervals show is not needed.
+- **Reason:** ~270 installs per week gives a D7 rate with a Wilson half-width near 5 pp, which is readable and comparable week to week, while 114 days divides into exactly 16 whole weeks plus 2 days (A-096) so anchored blocks waste only the 2-day remainder. Reporting pooled and weekly together separates the level from the trend instead of forcing one number to serve both.
+- **Affects:** §10.5.4; §10.5.5's eligibility table; the cohort inventory output; §10.7.5's segment-crossing prohibition.
+- **Falsifiable by:** Weekly install counts turning out badly uneven across the 16 blocks — the cohort inventory output is where that would show, and it would be a reported finding rather than a reason to re-grain mid-build.
+
+### A-116 — Horizon eligibility is fixed by cutoff date, and ineligible cells are printed as null
+- **Kind:** decision
+- **Part:** 1
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** A cohort is measurable at day *N* only if its **last** install day plus *N* falls inside the window ending 20181003, giving cutoffs of install day ≤ **20181002** for D1, ≤ **20180926** for D7 and ≤ **20180903** for D30 — so D1 runs on all 16 weekly cohorts, D7 on W01–W15, and D30 on W01–W12. An ineligible cell is printed as **explicitly null**, never zero, never blank and never omitted, with the cohort's install count still shown; a cohort excluded at one horizon still appears at the horizons it supports; and the pooled figures use a **different denominator per horizon**, printed beside each rate.
+- **Alternatives rejected:** Omitting ineligible cohorts from the table — a reader would infer that only 12 cohorts exist. Printing zero — a false retention figure, and the worst available error here. Pooling D30 over all installs including those that could not be observed for 30 days — the same error as printing zero, with the arithmetic hidden inside a single number. Truncating the whole analysis to the D30-eligible window so all three horizons share one denominator — it would discard four cohorts of D1 and D7 data that are perfectly observable.
+- **Reason:** Right-censoring is a property of the window, not of the cohorts, so it belongs in the table as a visible absence. A null says "not observable"; a zero says "nobody came back", and the two must never be confusable in a retention table.
+- **Affects:** §10.5.5; every weekly retention table; the pooled denominators; what Part 1's negative-results section must say about the window.
+- **Falsifiable by:** Not applicable — the cutoffs follow arithmetically from A-096's window and A-114's definitions.
+
+### A-117 — Part 1 reports no session-level metric
+- **Kind:** decision
+- **Part:** 1
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Drop session-level analysis entirely from Part 1 — no sessions per user, no session length, no session-gap analysis, and none of the originally sketched `LAG`-over-session-gaps work. Count everything **per user** or **per user-shard**, in both parts, and state in the report that item 11's per-session half is permanently unanswered for this dataset.
+- **Alternatives rejected:** Defining a session from event timestamps with a fixed inactivity threshold, 30 minutes being GA4's own default — legitimate as a stated convention, and rejected because the resulting session count is an artefact of the threshold sitting in a part whose other numbers are measurements, with nothing in the report able to tell a reader which is which. Using `session_start` as the boundary — it exists (74,353 events / 12,261 users) but carries no id, so attributing events to a session still needs an inactivity rule, and its own volume condemns it: **median 2 per user against 5,700,000 total events** (A-106) cannot describe the session structure of users with hundreds of events, so even the export's own marker is unreliable. Reporting session metrics with a caveat — a caveat does not make an invented quantity a measurement.
+- **Reason:** No session identifier exists anywhere in this export — not in the 52 `event_params` keys, not in the 25 `user_properties` keys (A-101, A-109). The brief assumed a session concept the data does not carry, and the honest response is to drop the analysis and say why, not to manufacture the concept and label it carefully.
+- **Affects:** §10.5.6; Part 1's output list; Part 2's counting unit (A-119); both negative-results sections.
+- **Falsifiable by:** A session identifier appearing in a field neither A-101 nor A-109 profiled — both enumerated their whole key space, so this is close to excluded.
+
+### A-118 — The README's three-sentence opener stays Part 3's, and no build session may touch it
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Leave §7.6's three-sentence opener as Part 3's, and forbid the Part 1 and Part 2 build sessions from modifying it; each owns only its own `## Part 1` or `## Part 2` heading. Recorded as the stated default for §9's **open question 8**, which stays open: whether the opener should become project-level is for the architecture session once both parts land.
+- **Alternatives rejected:** Letting each build session extend the opener as its part completes — two sessions editing the same three sentences at the top of the README is a collision with no upside, and the sentences would stop being three. Rewriting the opener now as a project-level summary — it would have to describe results that do not exist yet, and §7.6 requires every figure in it to trace to a committed output. Giving the opener to Part 2 as the last session — it makes the README's most-read text the responsibility of whichever session happens to run last.
+- **Reason:** Part 3 remains the highest-signal deliverable and the right thing for a reader to meet first, and a three-sentence opener only survives having exactly one owner.
+- **Affects:** §7.6; §8's README grants for both build sessions; §9 question 8.
+- **Falsifiable by:** Parts 1 or 2 turning out to carry the stronger headline, which is a judgement for the architecture session after the numbers exist.
+
+### A-119 — Part 2's population is all 15,175 users, counted per user
+- **Kind:** decision
+- **Part:** 2
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Set Part 2's funnel population to **all 15,175 distinct `user_pseudo_id` values** with at least one event in the shard range, count **per user** rather than per event or per session, and make **`first_open` not a funnel step** — the funnel begins at "present in the window".
+- **Alternatives rejected:** Part 1's 4,319-user install cohort — it would restrict Part 2 to 28.46% of the sample, duplicating Part 1's limitation for no new insight, and starting at `first_open` would make the funnel **non-monotone**, since 10,166 users started a level while only 4,319 have a `first_open`. Per-event counting — `level_start_quickplay` has median 5 events per user, 90th percentile 54, maximum 24,641, with **81.9%** of users repeating (A-106), so a per-event funnel counts one heavy player hundreds of times and calls it conversion. Per-session counting — no session identifier exists (A-117).
+- **Reason:** A funnel step must be reachable by everyone in the denominator, and Part 2's question is progression through content rather than acquisition, so the acquisition-shaped restriction buys nothing and costs three quarters of the sample.
+- **Affects:** §10.6.2; every Part 2 denominator; the step list in A-120; §10.7.5's Part 2 segment floor.
+- **Falsifiable by:** Not applicable — the monotonicity argument is arithmetic from A-097 and A-105.
+
+### A-120 — Four funnel steps, seven diagnostic events, and the sketched funnel abandoned
+- **Kind:** decision
+- **Part:** 2
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Fix the funnel as **S0** present in the window (15,175) → **S1** `level_start_quickplay` (10,166) → **S2** `level_end_quickplay` (8,168) → **S3** `level_complete_quickplay` (5,676). Report `screen_view`, `user_engagement`, `session_start`, `post_score`, `level_fail_quickplay`, `spend_virtual_currency` and `in_app_purchase` as **diagnostics in a labelled table, never as steps**. Abandon the sketched first_open → tutorial → first purchase funnel outright, substituting nothing for the missing tutorial step. `in_app_purchase` may not be a step.
+- **Alternatives rejected:** Substituting `session_start` or `screen_view` for the absent tutorial step — it would preserve a funnel shape chosen before the schema was known, which is the wrong thing to preserve, and neither event is a progression stage. `session_start` as S1 — its 80.80% coverage is attractive but its median of 2 events per user makes the count a floor on an unreliable marker (A-117), and the funnel would then lean on the least trustworthy event in the export. `in_app_purchase` as a terminal step — 27 users, 0.178%, supports no comparison between any two groups. `level_fail_quickplay` as a step — it is the failure branch of an attempt, not a stage beyond it, and placing it in the chain would make the funnel non-monotone. `post_score` as a step — parallel to progression, not part of it.
+- **Reason:** Item 10 established 37 event names and **no tutorial event of any kind** (A-105), so the original sketch has no referent; the four chosen events are the only ones that form a genuine content-progression chain, and they are monotone in raw user counts before any strictness is imposed.
+- **Affects:** §10.6.3 and §10.6.5; every Part 2 conversion rate; the reconciliation requirement in A-121.
+- **Falsifiable by:** An event among the 37 that is a progression stage and was missed — the vocabulary table in `outputs/tables/recon_03_event_vocabulary.csv` is the complete list a reviewer can check this against.
+
+### A-121 — The funnel is strict, with raw counts beside it and two 1.0% reporting triggers
+- **Kind:** decision
+- **Part:** 2
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Compute the funnel **strictly** — step *k*'s population is users holding all of S0…S*k* — and report the strict cumulative count **beside** the raw per-step count in the same table. Count and report **out-of-order users** (S2 without S1, S3 without S2); a share above **1.0%** of the step's raw population is a reported finding with a stated interpretation. Report the **`level_end_quickplay` reconciliation** at event and user level: 349,729 against `level_complete_quickplay` plus `level_fail_quickplay` at 328,123, a shortfall of 21,606 events or **6.18%**; a shortfall above **1.0%** is a finding with a stated interpretation, is **not** silently reconciled, and does **not** redefine S2.
+- **Alternatives rejected:** Raw per-step counts only — monotonicity would hold by luck rather than construction, and a funnel that can rise between steps is not a funnel. Strict counts only — the gap between strict and raw is the size of the out-of-order population, which is information about the export that a reader should see. Dropping out-of-order users silently — in an event log they usually mean an event was lost to sampling or emitted without its predecessor, and both bear on every count in the part. Redefining S2 as complete-or-fail to make the arithmetic close — it would fit the definition to the data and hide whatever the 6.18% actually is.
+- **Reason:** Strictness makes the funnel well-formed; reporting raw alongside makes the strictness auditable; and both 1.0% triggers exist because a discrepancy that size in a log is a finding about the data rather than an inconvenience to smooth over.
+- **Affects:** §10.6.4 and §10.6.5; Part 2's funnel table and its findings; what the negative-results section must cover.
+- **Falsifiable by:** The reconciliation closing exactly, which would make the trigger moot and is worth recording either way.
+
+### A-122 — The downsampling disclosure and the required shape of both reports
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Require both reports to carry a top-level **downsampling disclosure** — that Parts 1 and 2 describe a **50,000-events-per-day sample** of this property and not the game's player base; that **no absolute count** may be presented as a measure of real traffic; that **no growth or trend claim** may be made from volume, since a rise in installs per week is a change in what the sample captured; and that the per-day sampling fraction is unknown and may not be uniform, so even cross-week rate comparisons could be affected. Require each report to open with the **population reconciliation** table, then the disclosure, then results — Part 2 adding its re-scope statement (A-130) before results — and to end with a **"What this does not support"** section in §6's shape, placed after results and before any recommendation, covering at minimum the sampling cap, Part 1's 71.54% exclusion and its direction, Part 2's unanswerable revenue and session questions, the absence of cross-device identity, and for each the specific measurement that would be required — never "further research is needed".
+- **Alternatives rejected:** A footnote or a methods appendix — the uniform 50,000 rows per shard invalidates every volume reading in both parts, so burying it guarantees a reader forms a wrong impression before reaching it. Disclosing it once in the README only — the reports are what get read in isolation. Omitting the negative-results requirement because §6 already exists — §6 is frozen and scoped to Part 3, so the obligation has to be restated for these parts or it does not apply to them.
+- **Reason:** Every shard holding exactly 50,000 rows (A-096) means daily volume is an artefact of sampling, and that fact bears on more of Parts 1 and 2 than any single result does. The report structure is fixed so the reader meets the population and the caveat before the numbers, which is the same ordering §6 chose for Part 3.
+- **Affects:** §10.7.1 and §10.7.2; both reports' structure; what may be charted at all.
+- **Falsifiable by:** Documentation of the sampling method that establishes a uniform fraction, which would soften the cross-week point but not the absolute-count one.
+
+### A-123 — "A user" means a device-install, and the `first_open_time` check is gated at 99.0%
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Treat `user_pseudo_id` as the sole identity throughout both parts and state in both reports that **"a user" means a device-install** — one person on two devices is two users, a reinstall may be a new user, and no cross-device claim, unique-people claim, or deduplication of people is possible, because `user_id` is NULL on all 5,700,000 rows (A-099). Separately, require Part 1 to attempt one **sensitivity check**: derive install day from the `first_open_time` user property for all 15,175 users and recompute pooled D7 — but **only if** that derived date equals the `first_open` event's `event_date` for **≥ 99.0%** of the 4,319 users who have both. Below that, the check is **omitted** and the observed agreement share is reported instead. When it runs, the figure belongs in the negative-results section, labelled a robustness check on an unverified field, with the agreement share beside it; it never enters a results table and never becomes a headline.
+- **Alternatives rejected:** Using the word "users" without qualification — it reads as people, and every count in both parts would then overclaim. Omitting the sensitivity check — a reader will ask what discarding 71.54% costs, and the question deserves the best available answer even though the answer is not authoritative. Running it unconditionally — if `first_open_time` disagrees with the event date even for users who have both, the property's semantics are not established for the overlapping population either, and the check would import an unverified definition into the part that rejected it (A-112). Promoting it to a results table if it agrees closely — 99.0% agreement on the overlap says nothing about the 10,856 users who have no event to compare against, which is precisely the population the check extends to.
+- **Reason:** Identity language is where this kind of case study most often overclaims, and the fix costs one sentence. The gated check is the compromise between answering a fair question and not building on an unverified field: the gate is what keeps it a check rather than a second definition.
+- **Affects:** §10.7.3; both reports' wording; Part 1's data-handling output; A-112's cost disclosure.
+- **Falsifiable by:** The check passing its gate and agreeing closely with the primary, which would be evidence for revisiting A-112 in a later version — not during the build.
+
+### A-124 — The 207 duplicate rows are removed, unlike Part 3's outlier
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** De-duplicate on (`user_pseudo_id`, `event_name`, `event_timestamp`) before any count in both parts, report the **207** rows removed (A-103, **36 ppm**), and state the contrast with §5.1 in each report so it does not read as an inconsistency between parts.
+- **Alternatives rejected:** Keeping duplicates, as §5.1 keeps Part 3's extreme row — that rule exists because removing a row after randomisation breaks intention-to-treat, and there is no randomisation and no ITT here, so the reasoning does not transfer. Keeping them on the grounds that 36 ppm cannot move a rate — true for rates, false for distinct-user counts and per-user event counts, both of which are sensitive to exact row duplication and both of which Part 2's funnel and A-121's repetition figures depend on. Reporting both ways — the removal is deterministic and the affected quantity is 36 ppm, so a second set of tables would be ceremony.
+- **Reason:** A duplicated log row is not an observation of anything. The rule differs from Part 3's because the reason for Part 3's rule is absent here, and saying that explicitly is cheaper than letting a reader find two rules and assume one is a mistake.
+- **Affects:** §10.7.4; every count in both parts; each report's data-handling record.
+- **Falsifiable by:** The duplicate count differing materially from 207 at build time, which would be a finding about the source table rather than a reason to change the rule.
+
+### A-125 — Segmentation: five dimensions permitted, four dropped, with numeric floors
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Permit segmentation by **`geo.country`** (155 values, 0% null), **`platform`**, **`device.category`**, **`device.language`** and **`app_info.version`**. Drop **`geo.region`** at 88.57% null. Drop **`traffic_source.name`, `.medium` and `.source`**, reporting their concentration once as a single descriptive line to document why, and segmenting no metric by them. Attribute a user's segment from their **earliest event row**, ties broken by lowest `event_timestamp` then alphabetically lowest `event_name`. Report the share of users whose `geo.country` is not constant: above **5.0%** country segmentation carries a caveat naming the share, above **25.0%** it is dropped. Report a segment individually only at **≥ 100 users** in Part 1's eligible install population or **≥ 200 users** at S0 in Part 2; pool everything below the floor into one **"Other (n segments)"** row with its own count, never dropped and never itemised. Apply segmentation to **pooled cohorts only, never crossed with the weekly cohorts**.
+- **Alternatives rejected:** Keeping `traffic_source.*` because it passes the null and distinct-count tests — it is **99.91%, 99.79% and 99.39%** concentrated in two buckets, one a placeholder in each case (A-108), so any segment comparison would pit under 1% of events against the rest and read as acquisition analysis while being noise. Keeping `geo.region` with a caveat — 88.57% null fails item 13's stated 50% test, and a caveat does not restore 88.57% of the data. Attributing country by modal value across a user's events — defensible, but it needs a tie rule of its own and diverges from Part 1's install-time framing; one deterministic rule for both parts is worth more than a marginally better one in each. Dropping sub-floor segments instead of pooling — it silently changes the denominator, so the shares would no longer sum. Crossing segments with weekly cohorts — 4,319 installs over 16 weeks and 5 countries is about 54 users per cell, below A-114's suppression floor for most cells, so the table would be mostly blanks.
+- **Reason:** Item 13 gated segmentation and the gate's outcome was mostly favourable, so the specification says exactly which dimensions survived and which did not, with the number that decided each. The floors exist because a segment table's value is in its readable rows, and the pooling rule exists because a dropped row is a changed denominator.
+- **Affects:** §10.7.5; both parts' segment outputs; what may be charted by country; §10.5.4's cohort grain, which the no-crossing rule protects.
+- **Falsifiable by:** A non-constancy share above 25.0%, which drops country segmentation by this entry's own rule rather than by a new judgement.
+
+### A-126 — Query ceilings reset from measurement, and the total-ceiling halt added
+- **Kind:** supersedes A-085
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Supersedes scope:** the `Decision` field of A-085. Its reconciliation rule — the pre-flight gate on the estimate, actual bytes billed read from job statistics after execution, the running total kept in actuals, every divergence a finding in both directions — stands unchanged, as does the prohibition on raising a ceiling or enabling billing.
+- **Decision:** Reset the ceilings to **4 GiB billed per query**, **20 GiB per build session** and **40 GiB across both build sessions**, carrying the protocol forward from recon to the Part 1 and Part 2 sessions. Replace the 2×/10 GiB divergence band with a **prediction**: billed = `max(10 MiB, ceil(estimate → MiB))`, and halt if actual billed differs from it by more than **1 MiB**. **Add the missing halt condition:** accumulated actuals breaching the session's total ceiling, checked before each query as predicted-plus-accumulated and after each query on actuals. Halt also if a single query's billed bytes exceed the per-query ceiling. Require any question answerable from table metadata to be answered from metadata at zero cost, and require a committed budget ledger per session.
+- **Alternatives rejected:** Keeping 50 GiB and 200 GiB — they were set against the concern that the 10 MiB minimum applied **per shard**, which item 12 disproved: the minimum is per query, a 114-shard wildcard billed **274 MiB**, and the whole recon spent **4.90 GiB of 200 GiB**, 2.45% of a ceiling sized for a risk that was not real. Keeping the 2×/10 GiB band — the billing rule held exactly on 13 of 13 jobs and estimates equalled processed on every protocol query, so a tolerance band now hides a predictable quantity behind an allowance. Setting the per-query ceiling below 4 GiB — a full-column scan of the entire table costs 3.87 GiB, so a tighter ceiling would forbid a legitimate query. No total-ceiling halt, as v1.3 and v1.4 had it — a query could clear the pre-flight gate, bill under the per-query ceiling, stay inside the divergence band, and still push the running total past the total ceiling with nothing firing at all.
+- **Reason:** A ceiling is only useful if it catches mistakes and never legitimate work, and the recon's actuals make both edges knowable: 4 GiB is the price of the most expensive honest query against this table, and the billing rule is exact enough to predict rather than tolerate. The total-ceiling halt closes the one gap that let a sequence of individually-permitted queries overrun the budget.
+- **Affects:** §10.1 in full; both build sessions' query discipline; the required per-session ledger; §7.5's zero-cost re-runnability.
+- **Falsifiable by:** The billing rule failing on a build query, which halts the session by this entry's own terms and is a finding about the planner, not a reason to widen the ceiling.
+
+### A-127 — §8 grants by path prefix, and the dependency rule is scoped
+- **Kind:** supersedes A-076
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Supersedes scope:** the `Decision` field of A-076, in respect of how the recon session's grants are expressed and what its append permission on the requirements files means. Its owner reasoning, its BigQuery credential rules and its content gate stand unchanged.
+- **Decision:** Express every §8 grant and prohibition **by path prefix, never by extension** — the recon session owns `outputs/tables/recon_*`, covering the `.csv` results, the `.meta.json` provenance sidecars (A-093) and `recon_budget_ledger.csv` (A-094). Scope the dependency rule for every session: a session may add a dependency **only if resolution leaves every existing pin unchanged**; if it would move a pin that a completed part's lock file describes, the dependency is **not added** and the conflict is escalated to the architecture session. Name A-087's pattern as preferred: use a tool outside the project environment, as the recon did with the `bq` CLI, leaving both requirements files byte-for-byte unmodified.
+- **Alternatives rejected:** Leaving the grant as `recon_*.csv` against a prohibition on "any output file whose name does not begin `recon_`" — the sidecars and the ledger fall into the gap between an extension-scoped grant and a prefix-scoped prohibition, so the files the recon actually produced were simultaneously ungranted and unforbidden. Widening the prohibition to match the extension instead — it would leave every future non-CSV output in the same gap. Leaving "append only" unqualified on the requirements files — it reads as licence to add a dependency whose resolution moves an existing pin, which silently breaks the clean-checkout guarantee of a part that is already finished and whose report cites its results; this nearly cost Part 3 that guarantee.
+- **Reason:** A grant and its matching prohibition must be expressed in the same vocabulary or files fall between them, and "append-only" on a lock file means nothing unless it constrains resolution rather than only the diff.
+- **Affects:** §8 in full; every session's permitted paths; the environment a completed part's reproducibility claim rests on.
+- **Falsifiable by:** Not applicable — this is a correction to how a rule is written, not a change to what it intends.
+
+### A-128 — Parts 1 and 2 are built by two sessions, run sequentially
+- **Kind:** decision
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Define **two** build sessions in §8 with explicit path lists — Part 1 owning `sql/10`–`29`, `src/part1_retention/**`, `outputs/*part1_*`, `reports/part1_retention_cohorts.md`, `run_part1.sh` and the README's `## Part 1` heading; Part 2 the corresponding `30`–`59`, `src/part2_funnel/**`, `outputs/*part2_*`, `reports/part2_progression_funnel.md`, `run_part2.sh` and `## Part 2` — and run them **sequentially, Part 1 then Part 2, never concurrently**. Neither touches Part 3's paths, the recon's paths, the README opener, or the other's paths. In the shared `60`–`89` range either may add a query and **neither may modify one the other committed**; a needed change is a copy under a new number with a recorded reason.
+- **Alternatives rejected:** One session for both parts — no collision problem, but it carries Part 1's entire context into Part 2 for no benefit and produces one session owning two deliverables. Two sessions in parallel — it halves wall-clock and breaks A-083's re-read-before-append rule, which is only sufficient when no second session is appending at the same time; it also puts both sessions in the README at once. Allowing shared-SQL modification — it silently mutates the inputs of a part that is already committed and reported.
+- **Reason:** Two deliverables with separable paths want two sessions; running them in order is what makes the collision rules sufficient rather than merely hopeful, and it lets Part 2 read Part 1's committed outputs — the population reconciliation, the country-constancy share — instead of recomputing them.
+- **Affects:** §8; the order in which the remaining work happens; `assumptions.md` append safety.
+- **Falsifiable by:** A Part 2 requirement that turns out to need something Part 1 did not produce, which is a `challenge` to the architecture session rather than grounds to run both at once.
+
+### A-129 — Every condition in the Part 1 and Part 2 specifications carries a literal number
+- **Kind:** supersedes A-082
+- **Part:** project-wide
+- **Date:** 2026-09-12
+- **Status:** active
+- **Supersedes scope:** the `Decision` field of A-082, extending its question/artefact/problematic-answer contract with a numeric requirement and recording the checklist as closed. Its item 10 and item 13 provisions stand and were both discharged (A-105, A-108).
+- **Decision:** Uphold A-095's challenge: §10.2 stated a problematic condition **without a number** for items 3, 7, 11 and 13 while the other nine carried one. Record that all four closed on findings decisive enough that the omission did not bite — 0.28% of users for item 3, no web traffic at all for item 7, 81.9% repetition for item 11, null rates of 0% and 88.57% against a stated 50% test for item 13 — and that this was luck rather than method. **The standing rule from v1.5: every condition stated anywhere in §10.5, §10.6 or §10.7 carries a literal number.** Close the checklist, replacing its thirteen item texts with a what-it-established table pointing at A-096 through A-109.
+- **Alternatives rejected:** Retroactively numbering the four conditions — the items are executed and closed, so it would be bookkeeping with no consequence. Dismissing the challenge because all four resolved cleanly — the challenge is about method, and the method was wrong even where the outcome was fine. Keeping the full item texts in the document alongside the specifications — they are in v1.4 and in git, and duplicating them would leave two versions of the checklist to drift.
+- **Reason:** A condition a build session has to interpret is a condition the build session decides, which is the failure mode this whole document exists to prevent. The recon session was right to raise it, and the forward fix is worth more than a retroactive one.
+- **Affects:** §10.2's closure; every condition in §10.5–§10.7; how future checklists are written.
+- **Falsifiable by:** Not applicable — the rule constrains this document's authors, not the data.
+
+### A-130 — §10.3's outcome recorded, and 27 must be presented as a lower bound
+- **Kind:** decision
+- **Part:** 2
+- **Date:** 2026-09-12
+- **Status:** active
+- **Decision:** Record in §10.3 that the rule **fired** on item 9's counts — 27 revenue-positive events against a threshold of 1,000, short by a factor of **37**; 27 users being **0.178%** of 15,175 against 0.5%, short by a factor of **2.8** — selecting the progression-funnel branch, and that no judgement was exercised because the rule predates the query. Require Part 2's re-scope statement to present **27 as a lower bound rather than an exact count**, because `event_value_in_usd` is **absent from 15 of the 114 shards** and only **24** of the 27 events carry a strictly positive value in it while all 27 carry a positive `price` parameter. Rename the report to `reports/part2_progression_funnel.md`, since §10.3 forbids presenting Part 2 as monetization anywhere and a filename is a title.
+- **Alternatives rejected:** Reporting 27 as exact — `event_value_in_usd`'s absence from 15 shards means the true count could be higher, and presenting a floor as a census is the kind of small overclaim a reader who knows this dataset catches first. Re-running the count on `price` alone to get a cleaner number — it would be re-counting after seeing the verdict, which A-081's evaluate-once rule forbids, and it cannot change the outcome. Keeping the filename `part2_funnel_monetization.md` — the file name is the first thing a reader sees in the repository, and §10.3's prohibition is on presentation, not only on prose.
+- **Reason:** Nothing rests on the precision here: 27 could be wrong by an order of magnitude and still miss 1,000 by a factor of 3. That is exactly why saying "27, and that is a floor" costs nothing and buys the reader's trust in the numbers that do matter.
+- **Affects:** §10.3 and §10.6.1; Part 2's title, filename, framing and README section.
+- **Falsifiable by:** Not applicable — the outcome follows from A-104's counts against thresholds fixed in v1.3 and v1.4.

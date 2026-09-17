@@ -537,8 +537,14 @@ deliberately: the boundaries of the claim should be known before the claim.
   weekly install counts carries no information about acquisition. A reader who takes W08's
   415 installs as a good week and W03's 95 as a bad one has been misled by the sample.
 - **The 71.54% of the sample without a `first_open` event.** They are excluded by
-  construction, they are systematically different from the 4,319 (§1), and no retention
-  figure here describes them. §8.2 reports the one probe available.
+  construction and no retention figure here describes them. The exclusion is not random,
+  and its direction can be stated: a user with events but no `first_open` in the window
+  either installed before 20180612 or lost the event to the sampling, and either way the
+  4,319 measured here are systematically newer than the 10,856, who are to that extent an
+  established base. An established base retains better than new installs. **Therefore the
+  retention figures in this report sit below what a whole-population view would show —
+  they understate it.** By how much is unknown, and this report does not estimate it;
+  §8.2 reports the one probe available.
 - **Anything about people.** `user_id` is NULL on every row, so every count is of
   device-installs. Two devices belonging to one person are two users here, and a reinstall
   may be a new user. No unique-people figure can be produced from this export at all.

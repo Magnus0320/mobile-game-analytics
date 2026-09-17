@@ -1,0 +1,20 @@
+section,metric,value_num,value_text,note
+app_info_version,max_distinct_values_per_user,3,,largest number of distinct app versions held by one user
+app_info_version,share_non_constant_all_ppm,87644,,"parts per million; reported for the architecture session, not tested against any threshold"
+app_info_version,share_non_constant_part1_ppm,19680,,parts per million of the Part 1 install population
+app_info_version,users_non_constant_all,1330,,"A-136: measured and reported, with NO §10.7.5 trigger applied -- the document states none for this dimension"
+app_info_version,users_non_constant_part1,85,,"the same, restricted to Part 1 install population"
+app_info_version,users_with_any_null_row,0,,A-108 measured app_info.version at 0% null over rows
+app_info_version,users_with_four_or_more_values,0,,distribution detail
+app_info_version,users_with_three_values,14,,distribution detail
+app_info_version,users_with_two_values,1316,,distribution detail
+geo_country,max_distinct_values_per_user,7,,largest number of distinct countries held by one user
+geo_country,share_non_constant_all_ppm,25239,,parts per million; §10.7.5 caveats above 5.0% = 50000 ppm and drops above 25.0% = 250000 ppm
+geo_country,share_non_constant_part1_ppm,16207,,parts per million of the Part 1 install population; this is the share the §10.7.5 triggers are read on
+geo_country,users_non_constant_all,383,,users with more than one distinct geo.country across their deduped events
+geo_country,users_non_constant_part1,70,,"the same, restricted to Part 1 install population"
+geo_country,users_with_any_null_row,0,,A-108 measured geo.country at 0% null over rows
+geo_country,users_with_three_or_more_values,47,,distribution detail
+geo_country,users_with_two_values,336,,distribution detail
+population,users_all,15175,,all distinct user_pseudo_id in the shard range
+population,users_part1_install_population,4319,,users with at least one first_open event (§10.5.1); the population Part 1 segments

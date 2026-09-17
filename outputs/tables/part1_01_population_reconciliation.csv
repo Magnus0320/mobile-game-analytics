@@ -1,0 +1,7 @@
+metric,value,value_display,note
+users_total,15175,"15,175",distinct user_pseudo_id with at least one event in the 114-shard window
+users_with_first_open_event,4319,"4,319",Part 1's population (§10.5.1): cohorts are built on the first_open EVENT
+users_without_first_open_event,10856,"10,856",excluded from Part 1; the exclusion is not random (§10.5.1)
+users_without_first_open_share_pct,71.5387149918,71.54,"the cost of §10.5.1's choice, stated as a cost and placed first (§10.7.2)"
+first_open_events_deduped,4322,"4,322",first_open events after §10.7.4 de-duplication
+users_with_more_than_one_first_open,3,3,"§10.5.2 takes the earliest, which makes these deterministic (A-137)"

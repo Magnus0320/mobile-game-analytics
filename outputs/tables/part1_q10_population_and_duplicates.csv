@@ -1,0 +1,15 @@
+section,metric,value_num,value_text,note
+duplicates,deduped_event_rows,5699793,,"distinct (user_pseudo_id, event_name, event_timestamp)"
+duplicates,duplicate_groups_spanning_two_dates,0,,"A-138 assertion: expected 0, meaning MIN(event_date) in the collapse is a no-op"
+duplicates,duplicate_rows_removed,207,,"removed before any count, per §10.7.4 and A-124"
+duplicates,duplicate_share_ppm,36,,parts per million of raw rows
+duplicates,raw_event_rows,5700000,,"rows across the full shard range, before de-duplication"
+install_day_definition,users_where_timestamp_and_date_readings_disagree,0,,A-137 assertion: users whose earliest-by-timestamp first_open date differs from MIN(event_date); expected 0
+population,distinct_users_total,15175,,distinct user_pseudo_id with at least one event in the shard range; §10.6.2 and §10.3 denominator
+population,first_open_events_deduped,4322,,first_open events after §10.7.4 de-duplication
+population,first_open_rows_raw,4322,,first_open rows before de-duplication
+population,max_first_open_events_per_user,2,,largest number of deduped first_open events held by one user
+population,users_with_first_open_event,4319,,Part 1 population per §10.5.1 -- users with at least one first_open EVENT
+population,users_with_more_than_one_first_open,3,,users with two or more deduped first_open events; §10.5.2 takes the earliest
+population,users_without_first_open_event,10856,,excluded from Part 1 by §10.5.1; the exclusion is not random (§10.5.1)
+population,users_without_first_open_share_ppm,715387,,parts per million of all users; §10.5.7 item 1 reports this as a percentage

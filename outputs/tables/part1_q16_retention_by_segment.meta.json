@@ -1,0 +1,16 @@
+{
+  "actual_bytes_billed": 629145600,
+  "bytes_processed": 628173619,
+  "divergence_bytes": 971981,
+  "divergence_ratio": 1.0015,
+  "dry_run_estimate_bytes": 628173619,
+  "job_id": "part1_part1_q16_retention_by_segment_20260917T042720Z_64046",
+  "note": "Provenance per ARCHITECTURE.md \u00a710.1 and A-086. The source is an external table that no checksum covers, so this file records what authorised the query and what it cost, in place of \u00a77.5's cross-machine byte-identity rule (\u00a79 open question 7). predicted_billed_bytes is A-126's rule max(10 MiB, ceil(estimate -> MiB)); prediction_delta_bytes is what the halt rule tests against 1 MiB.",
+  "predicted_billed_bytes": 629145600,
+  "prediction_delta_bytes": 0,
+  "query_file": "sql/16_part1_retention_by_segment.sql",
+  "query_job_date": "2026-09-17T04:27:26Z",
+  "result_file": "part1_q16_retention_by_segment.csv",
+  "row_count": 63,
+  "shard_range_covered": "20180612-20181003 (114 shards)"
+}

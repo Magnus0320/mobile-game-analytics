@@ -1,0 +1,39 @@
+section,metric,value_num,value_text,note
+offset_bounds,feasible_offset_lower_hours,,-7.0003,lower bound in hours
+offset_bounds,feasible_offset_lower_seconds,-25201,,a constant offset must be at least this many seconds from UTC
+offset_bounds,feasible_offset_upper_exclusive_hours,,-7.0261,"upper bound in hours, exclusive"
+offset_bounds,feasible_offset_upper_exclusive_seconds,-25294,,and strictly less than this
+offset_bounds,feasible_offset_width_seconds,-93,,width of the feasible interval; a negative value would mean no constant offset fits
+offset_candidate,utc+00_00_rows_matching,3764482,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+01_00_rows_matching,3496927,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+02_00_rows_matching,3242678,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+03_00_rows_matching,2981176,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+04_00_rows_matching,2708117,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+05_00_rows_matching,2462043,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+06_00_rows_matching,2199631,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+07_00_rows_matching,1950525,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+08_00_rows_matching,1711773,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+09_00_rows_matching,1486535,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+10_00_rows_matching,1239377,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+11_00_rows_matching,998911,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+12_00_rows_matching,792571,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+13_00_rows_matching,607289,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc+14_00_rows_matching,444357,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-01_00_rows_matching,4050997,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-02_00_rows_matching,4365601,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-03_00_rows_matching,4706548,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-04_00_rows_matching,5027386,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-05_00_rows_matching,5307195,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-06_00_rows_matching,5549442,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-07_00_rows_matching,5698777,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-08_00_rows_matching,5534812,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-09_00_rows_matching,5389665,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-10_00_rows_matching,5255643,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-11_00_rows_matching,5092711,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+offset_candidate,utc-12_00_rows_matching,4907429,,rows whose local date under this whole-hour offset equals event_date; a feasible offset matches every row
+utc_comparison,rows_behind_utc_share_ppm,339565,,parts per million; A-098 measured 33.96%
+utc_comparison,rows_event_date_one_day_ahead_utc,0,,event_date is the UTC date plus one day; §10.5.2 rests on this being 0
+utc_comparison,rows_event_date_one_day_behind_utc,1935518,,event_date is the UTC date minus one day
+utc_comparison,rows_event_date_same_as_utc,3764482,,event_date equals the UTC date
+window,rows_event_date_ne_shard_suffix,0,,event_date disagreeing with the shard it is stored in; A-098 measured 0
+window,total_rows,5700000,,rows across the full shard range

@@ -1,0 +1,36 @@
+section,metric,value,value_display,note
+duplicates,raw_event_rows,5700000,"5,700,000",before §10.7.4 de-duplication
+duplicates,deduped_event_rows,5699793,"5,699,793","distinct (user_pseudo_id, event_name, event_timestamp)"
+duplicates,duplicate_rows_removed,207,207,"removed before any count (§10.7.4, A-124); A-103 measured 207"
+duplicates,duplicate_share_ppm,36,36,parts per million of raw rows
+duplicates,duplicate_groups_spanning_two_dates,0,0,A-138 assertion: 0 means the MIN(event_date) collapse is a no-op
+install_day_definition,users_where_timestamp_and_date_readings_disagree,0,0,A-137 assertion: 0 means earliest-by-timestamp and MIN(event_date) agree
+geo_country_constancy,users_non_constant_part1,70,70,users in Part 1's install population with more than one distinct geo.country
+geo_country_constancy,share_non_constant_part1_pct,1.6207000000,1.62,"§10.7.5: caveat above 5.0%, dropped above 25.0%"
+geo_country_constancy,max_distinct_values_per_user,7,7,largest number of distinct values held by one user
+geo_country_constancy,segmentation_outcome,reported without caveat,reported without caveat,"§10.7.5's triggers, applied to geo.country as the document defines them"
+app_info_version_constancy,users_non_constant_part1,85,85,users in Part 1's install population with more than one distinct app_info.version
+app_info_version_constancy,share_non_constant_part1_pct,1.9680000000,1.97,"A-136: reported, with NO trigger applied — §10.7.5 states none for this dimension"
+app_info_version_constancy,max_distinct_values_per_user,3,3,largest number of distinct values held by one user
+app_info_version_constancy,segmentation_outcome,reported; no trigger defined,reported; no trigger defined,A-136 raises the gap for the architecture session rather than inventing a gate
+first_open_time_check,zone_offset_used,-7,UTC-07:00,"the highest row-agreement whole-hour offset from query 11 (A-142); A-141's original criterion, an offset dating every row, is unsatisfiable on this export (A-143)"
+first_open_time_check,zone_day_key_agreement_pct,99.9785438596,99.9785,"the selected offset dates this share of all 5,700,000 rows; the runner-up offset dates 97.3586%"
+first_open_time_check,selected_offset,-7,UTC-07:00,"the minimum-agreement feasible offset (A-141), not the best of them"
+first_open_time_check,users_compared,4319,"4,319",users with both the property and a first_open event
+first_open_time_check,users_agreeing,4306,"4,306",derived date equals the first_open event's event_date
+first_open_time_check,agreement_share_pct,99.6990043992,99.70,§10.7.3's gate is 99.0%
+first_open_time_check,gate_met,true,yes,agreement at or above the 99.0% gate
+first_open_time_check,check_outcome,run,run,"§10.7.3: the figure belongs in the negative-results section, labelled a robustness check on an unverified field, never in a results table"
+first_open_time_check,sensitivity_users_total,"15,175","15,175","all users with a first_open_time property, §10.7.3's 15,175"
+first_open_time_check,sensitivity_users_inside_window,"5,938","5,938","derived install day inside 20180612-20181001, so assignable to a weekly cohort"
+first_open_time_check,sensitivity_users_before_window,"9,106","9,106","derived install day before the window: no observable day 7, excluded and counted rather than scored as unretained"
+first_open_time_check,sensitivity_pooled_d7_denominator,"5,611","5,611",users in the D7-eligible cohorts W01-W15 under the derived install day
+first_open_time_check,sensitivity_pooled_d7_retained,344,344,classic D7 on the derived install day
+first_open_time_check,sensitivity_pooled_d7_pct,6.13,6.13,recomputed pooled D7 over the first_open_time population (§10.7.3)
+first_open_time_check,sensitivity_pooled_d7_wilson_lo_pct,5.53,5.53,95% Wilson lower bound
+first_open_time_check,sensitivity_pooled_d7_wilson_hi_pct,6.79,6.79,95% Wilson upper bound
+first_open_time_check,primary_pooled_d7_pct_for_comparison,5.6733963711,5.67,"the primary D7 figure this is a robustness check on (§10.5.3, event-based population)"
+cohorts,installs_in_16_weekly_cohorts,4191,"4,191",the pooled D1 population
+cohorts,installs_in_excluded_tail,128,128,"20181002-20181003, excluded from every cohort table (§10.5.4) and reported here"
+cohorts,w16_installs_observable_at_d7_excluded_from_pooled,85,85,"installs on 20180925-20180926: individually observable at D7, excluded with their cohort under the per-cohort reading directed in A-134"
+assertions,sql_eligibility_assertions_passed,true,yes,"queries 12, 13 and 14 guard §10.5.4's blocks, §10.5.5's cutoffs and the 16/15/12 counts with ERROR(); they returned rows, so the guards did not fire"

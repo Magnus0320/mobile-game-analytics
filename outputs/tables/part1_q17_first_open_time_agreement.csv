@@ -1,0 +1,42 @@
+section,metric,value_num,value_text,note
+agreement,utc+00_00_users_agreeing,2974,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+01_00_users_agreeing,2811,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+02_00_users_agreeing,2644,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+03_00_users_agreeing,2499,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+04_00_users_agreeing,2305,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+05_00_users_agreeing,2130,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+06_00_users_agreeing,1900,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+07_00_users_agreeing,1667,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+08_00_users_agreeing,1439,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+09_00_users_agreeing,1275,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+10_00_users_agreeing,1084,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+11_00_users_agreeing,900,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+12_00_users_agreeing,750,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+13_00_users_agreeing,611,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc+14_00_users_agreeing,487,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-01_00_users_agreeing,3150,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-02_00_users_agreeing,3349,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-03_00_users_agreeing,3565,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-04_00_users_agreeing,3776,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-05_00_users_agreeing,3952,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-06_00_users_agreeing,4165,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-07_00_users_agreeing,4306,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-08_00_users_agreeing,4094,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-09_00_users_agreeing,3958,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-10_00_users_agreeing,3820,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-11_00_users_agreeing,3696,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+agreement,utc-12_00_users_agreeing,3557,,of 4319 users with both; the gate is 99.0% and A-141 reads it at the MINIMUM over the offsets query 11 shows feasible
+coverage,users_total,15175,,distinct users in the shard range
+coverage,users_whose_property_varies_across_rows,0,,a user property should be constant per user; expected 0
+coverage,users_with_both,4319,,the denominator §10.7.3 names for the 99.0% gate
+coverage,users_with_first_open_event,4319,,"Part 1 population, §10.5.1"
+coverage,users_with_first_open_time_property,15175,,"A-109 recorded this as all 15,175"
+granularity,users_value_on_exact_hour,0,,values landing exactly on an hour boundary; GA4 is documented as rounding this property
+granularity,users_value_on_exact_second,13,,values landing exactly on a second boundary
+unit,first_open_time_max_as_utc,,2076-09-03 21:27:14 UTC,the latest install time the property claims
+unit,first_open_time_max_value,1538635716971000,,raw INT64 value
+unit,first_open_time_min_as_utc,,2015-01-01 00:35:04.975 UTC,the earliest install time the property claims; may predate the window
+unit,first_open_time_min_value,3366394034000,,raw INT64 value
+unit,users_unit_microseconds,15174,,A-141 magnitude rule: value >= 1e15
+unit,users_unit_milliseconds,1,,A-141 magnitude rule: 1e12 <= value < 1e15
+unit,users_unit_seconds,0,,A-141 magnitude rule: value < 1e12

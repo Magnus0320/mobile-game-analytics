@@ -1,0 +1,16 @@
+metric,value,value_display,note
+rows_total,5700000,"5,700,000",rows across the 114-shard window
+rows_event_date_ne_shard_suffix,0,0,"event_date disagreeing with the shard holding it; §10.5.2's consistency claim rests on this being 0, and every Part 1 metric rests on that rather than on the zone"
+rows_event_date_one_day_behind_utc,1935518,"1,935,518",event_date is the UTC date minus one day
+rows_event_date_same_as_utc,3764482,"3,764,482",event_date equals the UTC date
+rows_event_date_one_day_ahead_utc,0,0,§10.5.2's argument for a fixed non-UTC zone requires this to be 0
+share_behind_utc_pct,33.9564561404,33.96,A-098 measured 33.96%; this is the figure re-observed by this session
+observed_offset,-7,UTC-07:00,"the whole-hour offset with the highest row-level agreement (A-142) — the offset this session OBSERVES, per §10.5.2, rather than assumes"
+observed_offset_rows_matching,5698777,"5,698,777",rows the selected offset dates correctly
+observed_offset_agreement_pct,99.9785438596,99.9785,quoted to four decimals because the residual is the finding (A-143)
+observed_offset_rows_not_matching,1223,"1,223",rows a fixed offset would place on the other side of a local midnight
+runner_up_offset_agreement_pct,97.3586315789,97.3586,"the next-best whole-hour offset, 149,335 rows behind; the margin is why the selection exercises no judgement"
+offsets_dating_every_row,0,0,"A-143: none. event_date is the export's own day stamp, not a function of event_timestamp under any constant offset"
+feasible_interval_width_seconds,-93,-93,"negative, so the interval is empty: the binding constraints lie this far the wrong way round"
+feasible_offset_lower_hours,-7.0003,-7.0003,"a constant offset would have to be at least this, from the binding row"
+feasible_offset_upper_exclusive_hours,-7.0261,-7.0261,"and strictly less than this, which is the contradiction"

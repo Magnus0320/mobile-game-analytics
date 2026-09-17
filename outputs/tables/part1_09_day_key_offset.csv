@@ -9,6 +9,7 @@ observed_offset,-7,UTC-07:00,"the whole-hour offset with the highest row-level a
 observed_offset_rows_matching,5698777,"5,698,777",rows the selected offset dates correctly
 observed_offset_agreement_pct,99.9785438596,99.9785,quoted to four decimals because the residual is the finding (A-143)
 observed_offset_rows_not_matching,1223,"1,223",rows a fixed offset would place on the other side of a local midnight
+observed_offset_rows_not_matching_pct,0.0214561404,0.0215,"the residual, as a share of the window; small, but not zero, which is the finding"
 runner_up_offset_agreement_pct,97.3586315789,97.3586,"the next-best whole-hour offset, 149,335 rows behind; the margin is why the selection exercises no judgement"
 offsets_dating_every_row,0,0,"A-143: none. event_date is the export's own day stamp, not a function of event_timestamp under any constant offset"
 feasible_interval_width_seconds,-93,-93,"negative, so the interval is empty: the binding constraints lie this far the wrong way round"

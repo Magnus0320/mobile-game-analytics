@@ -118,6 +118,28 @@ RETENTION_FIELDS = [
 # only in prose.
 POOLED_FIELDS = RETENTION_FIELDS[:-1] + ["cohorts_included", "note"]
 
+# The rolling tables carry two columns the classic tables have no use for: how
+# many days of observation the window leaves after the retention day, for the
+# cohort's last installer and for its first. Rolling counts any event on or
+# AFTER install + N, so its value depends on how much window remains; classic
+# needs the single day install + N and nothing else, which is why eligibility is
+# sufficient there and only a floor here (A-135, A-150). Printing the days beside
+# every cell puts the censoring in the table rather than in a note about it, and
+# it also makes the eligibility rule visible arithmetic: a cell is NULL exactly
+# when the minimum is below 1.
+ROLLING_FIELDS = (RETENTION_FIELDS[:-1]
+                  + ["window_days_remaining_min", "window_days_remaining_max", "note"])
+POOLED_ROLLING_FIELDS = (RETENTION_FIELDS[:-1]
+                         + ["cohorts_included", "window_days_remaining_min",
+                            "window_days_remaining_max", "note"])
+
+
+def _window_days(day_text: str, horizon: int) -> int:
+    """Observation days left after install + N for an installer on `day_text`."""
+    from datetime import date, timedelta
+    day = date(int(day_text[:4]), int(day_text[4:6]), int(day_text[6:8]))
+    return (C.WINDOW_END - (day + timedelta(days=horizon))).days + 1
+
 
 # --- 01 population reconciliation (§10.5.7 item 1, the report's first table) --
 
@@ -199,31 +221,46 @@ def retention(rows, kind: str, weekly_name: str, pooled_name: str) -> tuple[list
                     key=lambda x: (x["cohort"], int(x["horizon_days"]))):
         is_eligible = as_bool(r["eligible"])
         cell = rate_cell(r["retained"] or 0, r["denominator"] or 0, is_eligible)
-        weekly_out.append({
+        horizon = int(r["horizon_days"])
+        row_out = {
             "cohort": r["cohort"], "cohort_start": r["cohort_start"],
-            "cohort_end": r["cohort_end"], "horizon_days": int(r["horizon_days"]),
+            "cohort_end": r["cohort_end"], "horizon_days": horizon,
             "installs": int(r["installs"]), **cell,
             "note": label if is_eligible else
                     "cohort's last install day + N falls outside the window ending 20181003 (§10.5.5)",
-        })
+        }
+        if kind == "rolling":
+            row_out["window_days_remaining_min"] = _window_days(r["cohort_end"], horizon)
+            row_out["window_days_remaining_max"] = _window_days(r["cohort_start"], horizon)
+        weekly_out.append(row_out)
         summary[(kind, "weekly", r["cohort"], int(r["horizon_days"]))] = cell
 
     for r in sorted((x for x in rows if x["grain"] == "pooled"),
                     key=lambda x: int(x["horizon_days"])):
         cell = rate_cell(r["retained"], r["denominator"], True)
         horizon = int(r["horizon_days"])
-        pooled_out.append({
+        pooled_row = {
             "cohort": "POOLED", "cohort_start": r["cohort_start"], "cohort_end": r["cohort_end"],
             "horizon_days": horizon, "installs": int(r["installs"]), **cell,
             "cohorts_included": int(r["cohorts_included"]),
             "note": (f"{label}; pooled over the {r['cohorts_included']} cohorts eligible at D{horizon}, "
                      f"the per-cohort reading directed in A-134"),
-        })
+        }
+        if kind == "rolling":
+            lo = _window_days(r["cohort_end"], horizon)
+            hi = _window_days(r["cohort_start"], horizon)
+            pooled_row["window_days_remaining_min"] = lo
+            pooled_row["window_days_remaining_max"] = hi
+            pooled_row["note"] += (f"; blends cohorts with {lo} to {hi} days of observation left "
+                                   f"after day {horizon}, so it is not an estimate of one quantity (A-150)")
+        pooled_out.append(pooled_row)
         summary[(kind, "pooled", "POOLED", horizon)] = dict(
             cell, cohorts_included=int(r["cohorts_included"]))
 
-    return ([write_csv(weekly_name, RETENTION_FIELDS, weekly_out),
-             write_csv(pooled_name, POOLED_FIELDS, pooled_out)], summary)
+    weekly_fields = ROLLING_FIELDS if kind == "rolling" else RETENTION_FIELDS
+    pooled_fields = POOLED_ROLLING_FIELDS if kind == "rolling" else POOLED_FIELDS
+    return ([write_csv(weekly_name, weekly_fields, weekly_out),
+             write_csv(pooled_name, pooled_fields, pooled_out)], summary)
 
 
 # --- 07 retention by segment (§10.5.7 item 6, §10.7.5) -----------------------
@@ -318,6 +355,10 @@ def day_key(offset_rows) -> tuple[str, dict]:
         {"metric": "observed_offset_rows_not_matching", "value": total - best_rows,
          "value_display": f"{total - best_rows:,}",
          "note": "rows a fixed offset would place on the other side of a local midnight"},
+        {"metric": "observed_offset_rows_not_matching_pct",
+         "value": FULL.format(100.0 * (total - best_rows) / total),
+         "value_display": f"{100.0 * (total - best_rows) / total:.4f}",
+         "note": "the residual, as a share of the window; small, but not zero, which is the finding"},
         {"metric": "runner_up_offset_agreement_pct", "value": FULL.format(100.0 * runner_up / total),
          "value_display": f"{100.0 * runner_up / total:.4f}",
          "note": f"the next-best whole-hour offset, {best_rows - runner_up:,} rows behind; the "

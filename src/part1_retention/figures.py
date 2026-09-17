@@ -171,8 +171,9 @@ def build_all(classic_pooled, rolling_pooled, segment_rows) -> list[str]:
         weekly_trend("part1_05_rolling_retention_weekly.csv",
                      "part1_02_rolling_retention_weekly.png",
                      "Rolling retention by weekly install cohort (secondary definition)",
-                     "Retained at day N means any event on or after install + N. Same eligibility "
-                     "as classic (A-135); gaps are unmeasurable cohorts."),
+                     "Any event on or after install + N. NOT A TREND: the window left after day N "
+                     "falls from 101 days (W01) to 3 (W15) at D7, so the decline is largely "
+                     "right-censoring (A-150). Gaps are unmeasurable cohorts."),
         pooled_comparison(classic_pooled, rolling_pooled, "part1_03_pooled_retention.png"),
     ]
     segment_figure = by_segment(segment_rows, "part1_04_retention_by_segment.png")

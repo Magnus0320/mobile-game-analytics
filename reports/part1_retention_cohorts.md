@@ -193,9 +193,10 @@ this report are measured zeros**:
 
 Each of those is a real measurement: the cohort was observable at day 30 and nobody
 returned on it. Each carries an interval, because a zero out of 176 and a zero out of 84
-are different statements. A reader who could not tell these apart from the 20 ineligible
-cells in the same tables would draw a conclusion the data does not support, which is the
-whole reason the two are printed differently.
+are different statements. A reader who could not tell these apart from the **5 ineligible
+cells** in the classic weekly table — 10 across both weekly tables — would draw a
+conclusion the data does not support, which is the whole reason the two are printed
+differently.
 
 ### 3.4 Two retention definitions, both reported, neither unlabelled
 

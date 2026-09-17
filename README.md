@@ -2,7 +2,51 @@ We tested whether moving Cookie Cats' progression gate from level 30 to level 40
 
 ---
 
-## Part 1
+## Part 1 — Retention and install cohorts
+
+**Among the 4,319 users with an observed install event — not the 15,175 in the
+sample — classic retention is 21.74% at day 1, 5.67% at day 7 and 2.09% at day
+30.** Full analysis in
+[`reports/part1_retention_cohorts.md`](reports/part1_retention_cohorts.md).
+
+| | |
+|---|---|
+| Population | 4,319 users with an observed `first_open` event, of 15,175 in the sample |
+| Excluded | 10,856 users with no install event in the window — **71.54%**, and not a random slice |
+| Metric | Classic retention: at least one event on install day + N exactly |
+| D1 | **21.74%**, 95% Wilson [20.51, 23.01], n = 4,191 across 16 cohorts |
+| D7 | **5.67%**, 95% Wilson [4.99, 6.44], n = 3,913 across 15 cohorts |
+| D30 | **2.09%**, 95% Wilson [1.64, 2.67], n = 2,963 across 12 cohorts |
+| Cohorts | 16 fixed 7-day blocks from 20180612; the 20181002–03 tail (128 installs) is excluded |
+| Sampling | Every shard holds exactly **50,000 rows**, so no install count here is a traffic figure |
+
+Rolling retention is reported in §5 of the report and is deliberately not
+summarised here: its weekly series is not a trend and its pooled figures blend
+differently-censored cohorts, and a table cell carries neither caveat.
+
+Every figure above comes from a file in [`outputs/`](outputs/); none was typed in
+by hand.
+
+### What makes this analysis checkable
+
+The definitions came first. `ARCHITECTURE.md` §10.5 fixes the population, the day
+key, both retention definitions, the weekly grain, the eligibility cutoffs and the
+n = 30 suppression floor, and it was committed in `5b2c0ba` before any retention
+number existed. The judgement calls this build made on top of it were appended to
+`assumptions.md` and committed in `6a2fb35` **before the first query ran**.
+`git log` is the evidence.
+
+That ordering does real work here too. The observation window leaves 16 cohorts
+measurable at D1, 15 at D7 and 12 at D30; the 5 cells it rules out in the weekly
+table print an explicit `NULL`, while four cells across the weekly and segment
+tables are **measured zeros** — cohorts that were observable at day 30 and had
+nobody return. A reader who could not tell those apart would draw a conclusion
+the data does not support.
+
+One rule was changed mid-flight. The zone used to date an unverified field was
+picked by a criterion that turned out to be unsatisfiable, and the replacement
+was written after the figures it affects were visible. §8.2 of the report sets
+out that sequence in full, including what argues against it.
 
 ## Part 2
 

@@ -1,12 +1,12 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.5. §1–§6 are Part 3's pre-registration and are **frozen** as of
-commit `c6d72f83` (v1.2), which predates Part 3's first `src/` commit; Part 3 is
-complete and its report cites that commit. Nothing in v1.3, v1.4 or v1.5 changes
-anything inside §1–§6. The recon pass specified in v1.3 and v1.4 is **complete**,
-committed at `70c5475`; v1.5 replaces §10's deferral with full specifications for
-Part 1 (§10.5) and Part 2 (§10.6), written from those findings. §11 records what
-changed in each version.
+**Status:** v1.6. §1–§6 are Part 3's pre-registration and are **frozen** as of
+commit `c6d72f83` (v1.2); Part 3 is complete and its report cites that commit. No
+version after v1.2 changes anything inside §1–§6. The recon is complete at `70c5475`
+and **Part 1 is complete**; v1.6 settles the three challenges Part 1 raised (A-134,
+A-135, A-136) and four defects its build exposed. **§10.6 — Part 2's specification —
+is unaltered by v1.6**; see the note at its head for which shared rules changed
+around it. §11 records what changed in each version.
 
 **Purpose.** This document fixes the decisions that must not be made after seeing
 results. Implementation sessions read it and follow it. They do not edit it.
@@ -1061,6 +1061,39 @@ failure this whole project is built to avoid.
 - **Every number in prose must exist in a generated output file.** A figure typed
   directly into markdown is a defect, because it cannot be checked and it will not
   survive a re-run.
+- **Quoted and derived figures, distinguished — added in v1.6.** The rule above
+  catches invention. It does not catch **miscounting**, and Part 1 proved it: a
+  hand-written "20 ineligible cells" passed a pre-commit audit that verified every
+  prose figure appears verbatim in a committed table, because "20" appeared in the
+  tables as an unrelated figure. The true count was **5**. The generated tables were
+  right; the error was in prose assembled around them, and a wrong number built from
+  correct-looking parts satisfies a check designed to catch fabricated ones.
+  - A **quoted** figure appears verbatim as a cell of a committed table. The rule
+    above covers it.
+  - A **derived** figure is computed from committed tables rather than read from one:
+    a count of rows meeting a condition, a sum, a difference, a ratio, a percentage
+    across tables, an extremum, or any "*N* of *M*" statement.
+  - **Every derived figure in prose must be turned into a quoted one.** The renderer
+    computes it and emits it as its own cell in a committed table —
+    `outputs/tables/<part>_report_figures.csv`, one row per figure carrying an id,
+    the value, a one-line definition, and the source tables it was computed from —
+    and the prose quotes that cell. After that there is no second class of figure for
+    an audit to miss.
+  - **The audit checks the declared cell, not the corpus.** Each prose figure is
+    tagged with the table and column it comes from, and the audit verifies **that
+    cell**. A number that appears somewhere in the tables but not in its declared
+    cell **fails**. Verbatim-presence-anywhere is the weak match that let "20"
+    through.
+  - **Exempt numerals**, enumerated so the rule is checkable: dates and date ranges;
+    section numbers; `ARCHITECTURE.md` and `assumptions.md` references; thresholds
+    quoted from this document; and counts of this document's own items.
+  - Rejected: **a second-pass recount** — that is the check that just failed, run
+    again by the party that wrote the prose. Rejected: **forbidding derived figures
+    in prose** — "5 of the 48 cells are null" is exactly the sentence a reader needs,
+    and banning it pushes the arithmetic onto the reader. Rejected: **asserting
+    derived figures in the verify step without emitting them** — the number would
+    then exist in code and in prose but in no committed artefact, so traceability
+    breaks and a reader cannot check it without running the code.
 - **Committed outputs must match a fresh run — with the guarantee stated at two
   different strengths, because one of them cannot honestly be promised.**
   - **Tables and JSON: byte-identical.** Every file under `outputs/tables/` and
@@ -1765,12 +1798,22 @@ principle decides it.
 users. That number is not a footnote: §10.7.2 requires it as the **first table** in
 Part 1's report, before any retention figure appears.
 
-**And the exclusion is not random.** A user with events but no `first_open` in the
-window installed before 20180612, or had the event dropped by the sampling. Either way
-the 4,319 are systematically **newer** than the 10,856, so Part 1's cohorts are a
-recent-installer slice, not a random sample of players. Retention of new installs is
-typically lower than that of an established base, so the direction of the bias is
-knowable even though its size is not — and the report says which direction.
+**And the exclusion is not random — and the direction is stated here, not promised.**
+A user with events but no `first_open` in the window installed before 20180612, or had
+the event dropped by the sampling. Either way the 4,319 are systematically **newer**
+than the 10,856, so Part 1's cohorts are a recent-installer slice, not a random sample
+of players — and the 10,856 are, to that extent, an **established base**. An
+established base retains better than new installs. **Therefore Part 1's retention
+figures sit below what a whole-population view would show: they understate it.** By
+how much is unknown, and no report in this project estimates it; the §10.7.3 probe is
+the only available measurement and stays in the negative-results section.
+
+**A general rule, added in v1.6: a stated bias must name its direction.** v1.5 said
+"the direction of the bias is knowable" and stopped there, which is a promise of a
+disclosure rather than a disclosure — and Part 1's report completed the inference
+inline, ending up stronger than the document it was written against. Wherever any part
+of this project states that a figure is biased, it names **which way**, or states
+explicitly why the direction cannot be determined. "Knowable" is not an answer.
 
 **What Part 1's D1/D7/D30 figures are and are not about.** They describe **users with
 an observed `first_open` event inside the window**. They are not about the sample's
@@ -1815,6 +1858,37 @@ the same population, which cannot be checked. Part 1 states this in those terms.
   Classic is primary because D1/D7/D30 are conventionally classic, and because rolling
   retention at day *N* is bounded by the observation window in a way classic is not.
   Neither may be presented without its label.
+- **Rolling retention is right-censored by construction, and no eligibility rule
+  repairs it — added in v1.6.** This is a property of the metric, not a note about one
+  report. Rolling at day *N* counts any event on or after install + *N*, so its value
+  depends on **how much window remains after that day**. §10.5.5's eligibility rule
+  makes a rolling cell **measurable**; it does not make rolling cells **comparable**.
+  On this window the observation remaining to a cohort's last installer falls from
+  **101 days** (W01) to **3 days** (W15) at D7, and Part 1's rolling D7 tracked it
+  down the series from **30.68%** to **9.40%** (A-150).
+  - **A weekly rolling series may not be presented or described as a trend.** The
+    decline is what a shrinking window produces mechanically, and no behavioural
+    reading of it is available.
+  - **Pooled rolling figures are a blend of differently censored cohorts**, not an
+    estimate of a single quantity, and must be labelled as such wherever they appear.
+  - **Any chart of a rolling series names the censoring in its subtitle.**
+  - Classic retention is immune: an event on install day + *N* **exactly** needs one
+    observable day rather than all of them, which is why eligibility is sufficient for
+    classic and only a floor for rolling.
+- **Required: window-remaining columns beside every window-bounded secondary cell.**
+  Any table reporting a metric whose value depends on the amount of remaining window
+  prints **`window_days_remaining_min`** and **`window_days_remaining_max`** beside
+  every cell — the days of observation the window leaves after day *N* for the
+  cohort's **last** and **first** installer. This was Part 1's own innovation (A-151)
+  and v1.6 makes it a requirement, for two reasons: it shows the censoring **gradient**
+  directly, so a reader sees that a declining series is an artefact before anyone tells
+  them; and because **a cell is ineligible exactly when the minimum falls below 1**, it
+  turns §10.5.5's eligibility rule into arithmetic printed on the same row as the NULL
+  it explains. Classic tables carry no such column — classic needs the single day
+  install + *N* and nothing after it. The requirement is scoped to metrics whose value
+  depends on remaining window, so it does not reach a whole-window presence metric such
+  as Part 2's funnel (§10.6.2); it would reach any future step defined as "within *N*
+  days".
 - **Rates carry a 95% Wilson score interval.** Wilson rather than Wald, because
   cohort denominators run from tens to thousands and Wald misbehaves at small *n* and
   near 0 or 1; and rather than a bootstrap, because a closed-form interval on a single
@@ -1886,10 +1960,41 @@ So D1 runs on 16 cohorts, D7 on 15, and D30 on 12.
   figure of the worst kind.
 - **A cohort excluded at one horizon still appears at the horizons it supports.** W16
   is in the D1 table and null in D7 and D30.
-- **The pooled figures use a different denominator per horizon** — all installs
-  eligible at that horizon — and each denominator is printed beside its rate. Pooling
-  D30 over installs that could not be observed for 30 days would be the same error as
-  printing zero.
+- **The pooled figures use a different denominator per horizon**, and each denominator
+  is printed beside its rate. Pooling D30 over installs that could not be observed for
+  30 days would be the same error as printing zero.
+- **"Pooled at horizon *N*" means the union of the cohorts eligible at *N* — per
+  cohort, not per install.** Settled in v1.6; A-134 raised that v1.5's "all installs
+  eligible at that horizon" admitted both readings and adjudicated neither. So pooled
+  D1 = W01–W16, pooled **D7 = W01–W15 exactly**, pooled D30 = W01–W12, and the W16
+  installs falling on 20180925–20180926 — **85** of them in Part 1 — are **excluded
+  from pooled D7** and reported as an explicit count with their date range in the
+  cohort inventory.
+  - **Why per cohort.** Under the per-install reading, pooled D7 would contain installs
+    from a cohort the weekly table marks `—` at D7: the pooled figure would rest on
+    data the weekly table declares unmeasurable, and the two tables would disagree by
+    construction. Per cohort keeps pooled and weekly over the **same population**, so
+    any difference a reader sees between them is real rather than definitional. It also
+    avoids admitting a fractional cohort — two days of W16 — into a figure labelled as
+    covering whole cohorts, with no row of its own anywhere.
+  - **Only D7 moves.** D1 and D30 are **identical under both readings**, because W12
+    ends exactly on the D30 cutoff of 20180903 and W16 ends before the D1 cutoff of
+    20181002. The choice is narrow in effect and still worth fixing, because a rule
+    that admits two readings will be read both ways across three parts.
+  - The word **pooled**, anywhere in §10.5–§10.7, carries this meaning: the union of
+    eligible cohorts, never a per-install re-selection.
+- **Eligibility is a property of the observation window, not of a metric's primary or
+  secondary status — settled in v1.6.** A-135 raised that the 16 / 15 / 12 pattern sits
+  in a subsection whose surrounding text is about the primary metric, leaving it
+  unstated whether it governs the rolling table. It does. **Observation-window
+  eligibility binds every window-bounded metric in this project, present and future** —
+  classic retention, rolling retention, and any later metric that requires observing a
+  day which may fall outside the window — with ineligible cells printed null through
+  the same mechanism in every case. §10.5.7 item 5's "the same two shapes" therefore
+  means the same eligibility pattern too. A metric that is not window-bounded, such as
+  Part 2's whole-window funnel, is unaffected. And for rolling specifically, eligibility
+  is a **floor, not a fix**: it removes the cells with no observable window rather than
+  making the remainder equivalent — see §10.5.3.
 
 #### 10.5.6 Session-level analysis is dropped
 
@@ -1935,6 +2040,33 @@ in the report traceable to one of them (§7.5):
 8. **Budget ledger** — `outputs/tables/part1_budget_ledger.csv` (§10.1).
 
 ### 10.6 Part 2 — progression funnel
+
+**§10.6 is unaltered by v1.6.** Part 1's three challenges and four build defects
+produced no change to any Part 2 metric, population, step, counting unit or output.
+The Part 2 session should not have to infer that, so it is stated: every step, count
+and rule in §10.6.1 through §10.6.6 stands exactly as v1.5 wrote it.
+
+Four of v1.6's changes nevertheless **bind Part 2**, through §7.5 and §10.7 rather
+than through this section:
+
+- **§7.5's derived-figure rule.** Part 2's funnel report will be dense with "*N* of
+  *M*" statements, and every one of them is a derived figure that must be emitted as
+  its own cell in `outputs/tables/part2_report_figures.csv` and quoted from there. This
+  is the change most likely to alter how Part 2 is built.
+- **§10.7.5's constancy rule** now covers **every** permitted segment dimension, not
+  `geo.country` alone, with the 5.0% and 25.0% triggers applying per dimension.
+- **§10.7.7's criterion-replacement rule.** If Part 2 finds a rule in this document
+  unsatisfiable, the response is a `challenge` and the document's default — not a
+  substitute criterion of its own.
+- **§10.5.1's bias-direction rule.** Wherever Part 2 states that a figure is biased, it
+  names which way or says why it cannot.
+
+Two further v1.6 changes do **not** reach Part 2, stated so the boundary is explicit:
+observation-window eligibility (§10.5.5) and the window-remaining columns (§10.5.3)
+are scoped to window-bounded metrics, and Part 2's funnel is a **whole-window presence**
+metric — a user either has the event somewhere in the range or does not. If Part 2 ever
+adds a time-boxed step, "started a level within *N* days of first event", that step
+becomes window-bounded and both rules bind it.
 
 #### 10.6.1 Scope
 
@@ -2099,7 +2231,32 @@ measurement, never "further research is needed".
   the `first_open` event's `event_date` for **≥ 99.0%** of the 4,319 users who have
   both — otherwise the property's semantics are not established even for the
   overlapping population, the check is **omitted**, and the observed agreement share is
-  reported instead. When it runs, the figure goes in the negative-results section,
+  reported instead.
+- **The zone the date is derived in — specified in v1.6, with defined behaviour when
+  nothing fits.** Select the whole-hour UTC offset with the **highest row-level
+  agreement with `event_date`** across candidate offsets, report that agreement share
+  and the **margin over the runner-up**, and on an exact tie take the **lower** of the
+  tied offsets' agreement shares against the 99.0% gate. **This rule cannot select
+  nothing:** a highest-agreement criterion always selects, and the selection carries
+  its own quality measure. If the best available agreement is itself below 99.0%, the
+  selection still stands and **the check is omitted by its own gate above**, with the
+  agreement share reported as the reason — the gate does that work, never the zone
+  rule.
+  - **Why the obvious stricter criterion is wrong.** A rule requiring an offset
+    consistent with `event_date` on **all 5,700,000 rows** is unsatisfiable by correct
+    data: `event_date` is the export's own day stamp, not a field derivable from
+    `event_timestamp`, and A-143 found the feasible interval for a single constant
+    offset **empty by 93 seconds**, with 1,223 rows — **0.0215%** — sitting across a
+    local midnight. §10.5.2's argument for the day key never claimed derivability, only
+    **consistency**, which is established. A criterion stricter than this document's own
+    claim is not conservatism; it is a rule correct data cannot satisfy, and it selects
+    nothing — which is how Part 1's first pass omitted a required check for a reason
+    having nothing to do with the field under test.
+  - **The selection must be independent of the figure the check produces.** Row-level
+    agreement with `event_date` is a property of the export, not an output of the
+    sensitivity check, which is what makes it a legitimate criterion. A criterion whose
+    value could be influenced by the number the step will report is never permitted
+    (§10.7.7). When it runs, the figure goes in the negative-results section,
   labelled as a robustness check on an unverified field, with the agreement share beside
   it. It never appears in a results table and never becomes a headline. It exists to
   answer one question a reader will ask — what does discarding 71.54% cost — and it
@@ -2138,9 +2295,27 @@ Rules, all numeric:
 - **Attribution is by the user's earliest event row**, ties broken by lowest
   `event_timestamp` then by alphabetically lowest `event_name`. One deterministic rule
   for both parts.
-- **Report the share of users whose `geo.country` is not constant** across their events.
-  Above **5.0%**, country segmentation is reported with a caveat naming the share;
-  above **25.0%**, country segmentation is **dropped**.
+- **Report the non-constant share for every permitted dimension, and apply the triggers
+  to each — generalised in v1.6.** For each of the five permitted dimensions, report the
+  share of users whose value is not constant across their events. Above **5.0%** for a
+  dimension, that dimension's segmentation is reported with a caveat naming the share;
+  above **25.0%**, that dimension is **dropped**. The triggers apply **per dimension,
+  independently**, not to `geo.country` alone as v1.5 had it.
+  - **Why.** A-136 raised that v1.5 attached the constancy test to the dimension where
+    instability is **least** likely and omitted it from the one where it is **most**
+    likely: app versions change over a 114-day window by nature — that is what a
+    release is. Part 1 measured both rather than inventing the missing gate, and the
+    worry was real in direction and small in size: **1.97%** non-constant for
+    `app_info.version` against **1.62%** for `geo.country` (A-148). The dimension
+    without the test did vary more, and at that magnitude it cost this dataset nothing.
+    The rule is generalised because being right by luck on one export is not a reason to
+    keep a rule that was attached to the wrong end.
+  - **Name what earliest-event attribution actually measures.** Under §10.7.5's
+    attribution rule, "segment by `app_info.version`" means **version at install**, and
+    "segment by `device.language`" means **language at first observed event** — both
+    defensible quantities, neither the one the phrase suggests. Any report segmenting by
+    a dimension whose earliest-event value differs in meaning from "the user's value"
+    says so in those words, in the table's own caption.
 - **Segment floors.** Part 1: a segment is reported individually only with **≥ 100
   users** in the eligible install population (of 4,319). Part 2: **≥ 200 users** at S0
   (of 15,175) — S3 retains 37.40%, so 200 at entry leaves about 75 at the last step,
@@ -2160,6 +2335,10 @@ part-specific points:
   denominator of 30 is suppressed to a count (§10.5.3).
 - **Rates to two decimal places** in percentage points; exact counts as integers; no
   significance stars anywhere (A-031).
+- **Derived figures follow §7.5's rule:** a count, sum, difference, ratio, percentage
+  across tables, extremum, or "*N* of *M*" statement in prose is emitted as its own
+  cell in `outputs/tables/<part>_report_figures.csv` and quoted from there, and the
+  audit checks the **declared cell** rather than the corpus.
 - **Every number in prose traces to a committed table.** BigQuery-derived outputs are
   exempt from cross-machine byte-identity and carry a provenance sidecar instead
   (A-080, A-093); §9's open question 7 stays open, and item 12's measured figures —
@@ -2167,15 +2346,61 @@ part-specific points:
   make a checksummed materialised extract affordable enough to be worth revisiting when
   both parts are done.
 
+#### 10.7.7 When a rule in this document cannot be satisfied
+
+Part 1 hit a rule that **correct data could not satisfy** — A-141's requirement of a
+UTC offset consistent with `event_date` on all 5,700,000 rows — and replaced the
+criterion itself, substituting **highest** agreement for **consistent on every row**.
+The replacement inverts the principle it supersedes, minimum becoming maximum, and it
+was written with the results visible. Part 1's report discloses that in its own
+section 8.2 and does
+not explain it away, and that disclosure is the only reason the result stands. v1.6
+turns the episode into a rule.
+
+**A build session may not replace a selection criterion on its own authority.** When a
+session finds a rule in this document unsatisfiable by correct data, the response is
+fixed:
+
+1. **Stop at that point.** Do not proceed on a substituted criterion.
+2. **Append a `challenge` entry** stating the criterion, the evidence that it cannot be
+   satisfied, and the margin by which it fails — 93 seconds and an empty feasible
+   interval, in A-143's case.
+3. **Proceed on the document's own default for a failed gate.** For a gated optional
+   step that means **omit the step and report the omission with its reason**. A session
+   that omits a step because a rule was unsatisfiable has followed this document, not
+   failed it.
+4. The **architecture session** then replaces the criterion, and the step runs on a
+   later pass.
+
+**Where a replacement is nonetheless made under explicit direction from the project
+author**, as A-142's was, three disclosures are mandatory and their absence voids the
+result:
+
+- that the replacement **inverts or weakens** the criterion it supersedes, named as
+  such;
+- that it was **written with the dependent results visible**, stated plainly rather
+  than left for a reader to infer from the commit order;
+- the **margin** by which the new criterion selects, measured **before** the dependent
+  figures exist — A-142's 149,335 rows, computed before the agreement figures the check
+  would produce.
+
+**The hard line, in every case.** A criterion may only be replaced by one whose value
+**cannot be influenced by the figure the step will produce.** Row-level agreement with
+`event_date` is a property of the export and not an output of the sensitivity check,
+which is what makes A-142 tolerable rather than fatal — the inversion changed which
+zone was chosen, not whether the answer looked good. A criterion that reaches, however
+indirectly, for the number the step is about is p-hacking whatever its disclosure, and
+no direction and no disclosure makes it admissible.
+
 ---
 
 ## 11. Document control
 
-- **Version:** 1.5. **Written:** 2026-09-10, before any data access. **Amended:**
+- **Version:** 1.6. **Written:** 2026-09-10, before any data access. **Amended:**
   2026-09-10 (v1.1, then v1.2), both before any data access and before the repository
   was initialised; 2026-09-11 (v1.3 and v1.4), after Part 3 was completed and
-  committed; 2026-09-12 (v1.5), after the recon completed at `70c5475`. No version
-  after v1.2 touches §1–§6.
+  committed; 2026-09-12 (v1.5), after the recon completed at `70c5475`; 2026-09-17
+  (v1.6), after Part 1 completed. No version after v1.2 touches §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -2517,3 +2742,100 @@ part-specific points:
   de-duplication rule deliberately differs from §5.1's keep-the-row rule and does not
   amend it: §5.1 governs Part 3 only, and the contrast is explained where the new rule
   is stated.
+
+### v1.6 — 2026-09-17
+
+- **Sections touched:** header, §7.5, §10.5.1, §10.5.3, §10.5.5, §10.6 (a note at its
+  head; no rule changed), §10.7.3, §10.7.5, §10.7.6, §10.7.7 (new), §11. **None inside
+  §1–§6.**
+- **Substantive change:**
+  - **§7.5 — quoted versus derived figures.** The every-number-in-a-file rule catches
+    invention, not miscounting: Part 1's hand-written "20 ineligible cells" passed a
+    verbatim audit because "20" appeared in the tables as an unrelated figure, against
+    a true count of **5**. A **derived** figure — a count of rows meeting a condition, a
+    sum, a difference, a cross-table percentage, an extremum, any "*N* of *M*" — must
+    now be **emitted as its own cell** in `outputs/tables/<part>_report_figures.csv`
+    with an id, a definition and its source tables, and quoted from there, which turns
+    every derived figure into a quoted one. And **the audit checks the declared cell
+    rather than the corpus**: a figure is tagged with its table and column, and a number
+    present somewhere in the tables but not in its declared cell **fails**. Exempt
+    numerals enumerated. A second-pass recount, banning derived figures, and asserting
+    them without emitting them were all considered and rejected, with reasons.
+  - **§10.5.5 — A-134 settled.** "Pooled at horizon *N*" means the **union of the
+    cohorts eligible at *N*** — per cohort, not per install — so pooled D7 is W01–W15
+    exactly and the **85** W16 installs of 20180925–26 are excluded and reported. Per
+    cohort, because the per-install reading would rest a pooled figure on data the
+    weekly table marks unmeasurable, making the two tables disagree by construction, and
+    would admit a fractional cohort with no row of its own. **D1 and D30 are identical
+    under both readings** — W12 ends exactly on the D30 cutoff, W16 before the D1 cutoff
+    — so only D7 moved; fixed anyway, because a rule with two readings gets read both
+    ways across three parts.
+  - **§10.5.5 — A-135 settled, and generalised.** Observation-window eligibility is a
+    property of **the window, not of a metric's primary or secondary status**, and binds
+    **every window-bounded metric** in the project, present and future — so the 16/15/12
+    pattern governs the rolling table, and §10.5.7's "the same two shapes" means the
+    same eligibility pattern too. Non-window-bounded metrics are unaffected.
+  - **§10.5.3 — rolling censoring written as a property of the metric.** Eligibility
+    makes a rolling cell **measurable**, not **comparable**: the window remaining to a
+    cohort's last installer falls from **101 days** to **3 days** at D7, and Part 1's
+    rolling D7 tracked it from **30.68%** to **9.40%**. A weekly rolling series therefore
+    **may not be presented as a trend**, pooled rolling figures must be labelled a blend
+    of differently censored cohorts, and any rolling chart names the censoring in its
+    subtitle. Part 1's `window_days_remaining_min`/`_max` columns (A-151) become a
+    **requirement** for every window-bounded secondary table, because a cell is
+    ineligible exactly when the minimum falls below 1 — which puts the reason for a NULL
+    on the same row as the NULL.
+  - **§10.7.5 — A-136 settled, and generalised.** The non-constant share is now measured
+    and reported for **every** permitted dimension, with the **5.0%** caveat and
+    **25.0%** drop triggers applying **per dimension**. v1.5 had attached the test to the
+    dimension where instability is least likely and omitted it where it is most likely;
+    Part 1 measured both rather than inventing a gate and found **1.97%** for
+    `app_info.version` against **1.62%** for `geo.country` — real in direction, small
+    enough to cost this dataset nothing. Added: any report segmenting by a dimension
+    whose earliest-event value differs in meaning from "the user's value" must say so —
+    `app_info.version` means **version at install**.
+  - **§10.7.3 — the zone rule given defined behaviour.** Select the whole-hour offset
+    with the **highest row agreement** with `event_date`, report the share and the margin
+    over the runner-up, break an exact tie by the **lower** agreement share. **The rule
+    cannot select nothing**, and if the best agreement is itself under 99.0% the check is
+    omitted **by its own gate**, never by the zone rule silently selecting nothing — which
+    is how Part 1's first pass omitted a required check for a reason unrelated to the
+    field under test. Recorded why the stricter criterion was wrong: `event_date` is the
+    export's own day stamp, not derivable from `event_timestamp`, and the feasible
+    interval for a constant offset is **empty by 93 seconds** (A-143), so a rule
+    stricter than §10.5.2's own consistency claim is unsatisfiable by correct data.
+  - **§10.7.7 (new) — when a rule cannot be satisfied.** A build session **may not
+    replace a selection criterion on its own authority**: it stops, appends a
+    `challenge` with the margin of failure, and **proceeds on the document's default for
+    a failed gate** — omitting a gated step and reporting the omission is following this
+    document, not failing it. Where a replacement is made under explicit direction, as
+    A-142's was, three disclosures are mandatory and their absence voids the result: that
+    it **inverts or weakens** the superseded criterion, that it was **written with the
+    dependent results visible**, and the **margin** by which it selects, measured before
+    the dependent figures exist. The hard line: a criterion may only be replaced by one
+    whose value **cannot be influenced by the figure the step will produce** — which is
+    what makes A-142 tolerable rather than fatal, since row agreement with `event_date` is
+    a property of the export and not an output of the check.
+  - **§10.5.1 — the bias sentence finished.** v1.5 said the direction was "knowable" and
+    stopped; Part 1's report completed the chain inline and ended up stronger than the
+    document it was written against. §10.5.1 now states it: the excluded 10,856 are to
+    that extent an **established base**, an established base retains better than new
+    installs, and **Part 1's figures therefore understate a whole-population view** by an
+    unknown amount no report estimates. General rule added: **a stated bias must name its
+    direction**, or say why it cannot.
+  - **§10.6 — unaltered, and said so explicitly** at its head, with the four v1.6 changes
+    that bind Part 2 through §7.5 and §10.7 (derived figures, per-dimension constancy,
+    criterion replacement, bias direction) and the two that do not reach it (window
+    eligibility and window-remaining columns, both scoped to window-bounded metrics,
+    where Part 2's funnel is a whole-window presence metric) — with the note that a
+    future "within *N* days" step would bring both into scope.
+- **assumptions.md:** added **A-152 through A-159**. Partially superseded by named
+  field: A-112 (`Decision`, by A-157), A-114 (`Decision`, by A-153), A-116 (`Decision`,
+  by A-152), A-123 (`Decision`, by A-155), A-125 (`Decision`, by A-154). Status lines
+  annotated on all five. Three of Part 1's challenge entries — A-134, A-135, A-136 —
+  are answered by A-152, A-153 and A-154 respectively.
+- **Touched §1–§6:** **No.** Every change is in the header, §7.5, §10 or §11. **Part 3's
+  pre-registration freeze is unaffected** — it attached at v1.2, commit `c6d72f83`,
+  Part 3 is complete, and its report cites that commit. §7.5's derived-figure rule is
+  the only v1.6 change that would have altered how Part 3 was audited had it existed
+  then; it is **not applied retroactively**, and Part 3's report is not reopened.

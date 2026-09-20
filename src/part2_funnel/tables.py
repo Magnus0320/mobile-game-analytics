@@ -746,7 +746,56 @@ def view_ledger():
                           ["l", "r", "r", "r", "r"], rows)
 
 
+def view_readme_summary():
+    """The README's Part 2 summary table, generated like every other one.
+
+    A-165 applies to the README as much as to the report: a figure a reader meets
+    first is the one least worth typing by hand.
+    """
+    pop = {r["metric"]: r for r in read_rows("part2_01_population_reconciliation.csv")}
+    f = {r["step"]: r for r in read_rows("part2_03_funnel.csv")}
+    dh = {(r["section"], r["metric"]): r
+          for r in read_rows("part2_02_data_handling.csv")}
+    users = int(pop["distinct users with at least one event in the window"]["users"])
+
+    def step(key, previous=None):
+        row = f[key]
+        cell = (f"**{int(row['users_strict']):,}** &middot; "
+                f"{row['share_of_s0_pct_display']}% of S0")
+        if previous:
+            cell += (f" &middot; {row['step_conversion_pct_display']}% of {previous}, "
+                     f"95% Wilson [{row['step_conversion_lo_display']}, "
+                     f"{row['step_conversion_hi_display']}]")
+        else:
+            cell += (f", 95% Wilson [{row['share_of_s0_lo_display']}, "
+                     f"{row['share_of_s0_hi_display']}]")
+        return cell
+
+    rows = [
+        ["Population", f"{users:,} users with at least one event in the window — "
+                       f"everyone in the sample, none excluded"],
+        ["Counting unit", "Per user, whole-window presence; `first_open` is not a step"],
+        ["S0 — present in the window",
+         f"**{int(f['S0']['users_strict']):,}** &middot; "
+         f"{f['S0']['share_of_s0_pct_display']}%, by construction"],
+        ["S1 — started a level", step("S1")],
+        ["S2 — finished an attempt", step("S2", "S1")],
+        ["S3 — completed a level", step("S3", "S2")],
+        ["Revenue",
+         f"**Not answerable.** {dh[('rescope', 'revenue-positive purchase events')]['value_display']}"
+         f" revenue-positive purchase events from "
+         f"{dh[('rescope', 'distinct users with such an event')]['value_display']} users — "
+         f"{dh[('rescope', 'payer coverage of the 15,175-user denominator')]['value_display']}"
+         f" of users against a 0.5% bar, and that count is a floor"],
+        ["Sampling",
+         f"Every shard holds exactly **{C.SHARD_ROWS:,}** rows, so no count here is a "
+         f"traffic figure"],
+    ]
+    return markdown.table(["", ""], ["l", "l"], rows)
+
+
 VIEWS = {
+    "readme_summary": view_readme_summary,
     "population": view_population,
     "funnel": view_funnel,
     "out_of_order": view_out_of_order,

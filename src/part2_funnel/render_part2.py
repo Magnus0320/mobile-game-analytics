@@ -68,10 +68,15 @@ def main() -> int:
 
     # A-165: report tables are generated from their CSVs, never typed. --fill-tables
     # injects them; every later run regenerates and asserts byte-equality instead.
-    if "--fill-tables" in sys.argv and C.REPORT.exists():
+    if "--fill-tables" in sys.argv:
         from . import markdown
-        C.REPORT.write_text(markdown.fill_blocks(C.REPORT.read_text(), tables.VIEWS))
-        print(f"\nfilled the generated table blocks in {C.REPORT.name}")
+        for path in (C.REPORT, C.REPO_ROOT / "README.md"):
+            if not path.exists():
+                continue
+            filled = markdown.fill_blocks(path.read_text(), tables.VIEWS)
+            if filled != path.read_text():
+                path.write_text(filled)
+                print(f"\nfilled the generated table blocks in {path.name}")
     written += figures.build_all()
 
     print("\nwrote:")

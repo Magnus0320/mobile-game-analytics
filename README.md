@@ -48,7 +48,52 @@ picked by a criterion that turned out to be unsatisfiable, and the replacement
 was written after the figures it affects were visible. §8.2 of the report sets
 out that sequence in full, including what argues against it.
 
-## Part 2
+## Part 2 — Progression funnel
+
+**Among all 15,175<!--fig:pop_users--> users present in the window — not Part 1's 4,319<!--fig:pop_with_first_open-->-user install cohort — 66.99%<!--fig:s1_share_of_s0--> started a level, 53.67%<!--fig:s2_share_of_s0--> finished an attempt and 37.38%<!--fig:s3_share_of_s0--> completed one.**
+Full analysis in
+[`reports/part2_progression_funnel.md`](reports/part2_progression_funnel.md).
+
+**This is a progression funnel, and this sample does not support a revenue
+analysis.** It carries 27<!--fig:rescope_events--> revenue-positive purchase events from 27<!--fig:rescope_users--> users — 0.178%<!--fig:rescope_coverage_pct--> of users against the 0.5% bar `ARCHITECTURE.md` §10.3 fixed before the data was queried — and that count is a **lower bound, not a census**: the revenue field is absent from 15<!--fig:rescope_shards_without_usd--> of the 114<!--fig:shard_count--> daily shards.
+
+<!--table:readme_summary-->
+|  |  |
+|---|---|
+| Population | 15,175 users with at least one event in the window — everyone in the sample, none excluded |
+| Counting unit | Per user, whole-window presence; `first_open` is not a step |
+| S0 — present in the window | **15,175** &middot; 100.00%, by construction |
+| S1 — started a level | **10,166** &middot; 66.99% of S0, 95% Wilson [66.24, 67.74] |
+| S2 — finished an attempt | **8,145** &middot; 53.67% of S0 &middot; 80.12% of S1, 95% Wilson [79.33, 80.88] |
+| S3 — completed a level | **5,672** &middot; 37.38% of S0 &middot; 69.64% of S2, 95% Wilson [68.63, 70.63] |
+| Revenue | **Not answerable.** 27 revenue-positive purchase events from 27 users — 0.178% of users against a 0.5% bar, and that count is a floor |
+| Sampling | Every shard holds exactly **50,000** rows, so no count here is a traffic figure |
+<!--/table-->
+
+Two results are left out of the table, because a cell carries neither asymmetry. 202<!--fig:le_users_shortfall--> users record the end of a level attempt with neither outcome event, while exactly 1<!--fig:le_outcome_without_end--> records an outcome with no end (§6). And 1,955<!--fig:track_without_s1_with_np--> of the 5,009<!--fig:track_without_s1--> users this funnel counts as never starting a level did start one in a parallel mode the funnel does not cover (§9.1).
+
+Every figure above comes from a file in [`outputs/`](outputs/); none was typed in
+by hand.
+
+### What makes this analysis checkable
+
+The definitions came first. `ARCHITECTURE.md` §10.6 fixes the population, the
+counting unit, the four steps, the strict-cumulative rule and both reporting
+triggers, and it was committed before any funnel query ran. The judgement calls
+this build made on top of it were appended to `assumptions.md` and committed
+**before the first query ran**. `git log` is the evidence.
+
+Every number in the report is checked against the **specific table cell it claims
+to come from**, not against the outputs as a whole. Tables are generated from
+their CSVs and verified by regenerating them; each prose figure names its own
+cell; and the check is tested on every run against planted failures, including
+the one that got past Part 1's audit, where a wrong count survived because its
+digits appeared elsewhere in the outputs.
+
+One rule could not be applied as written. §10.6.5 requires a reconciliation "at
+both event and user level" but fixes only the event-level arithmetic, which does
+not translate to users. §6.3 of the report names all three readings, records
+which was directed, and leaves the choice to the architecture session.
 
 ## Part 3 — A/B test: gate placement and retention
 

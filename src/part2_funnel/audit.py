@@ -90,11 +90,13 @@ def scan_untagged(text: str) -> list[str]:
     return problems
 
 
-def audit_prose(text: str, register_rows: list[dict]) -> list[str]:
-    """Check every tagged figure against its declared cell, then scan the rest."""
+def _scan_tags(body: str, known: dict) -> tuple[list[str], set, str]:
+    """Check every tagged figure against its declared cell.
+
+    Returns the problems, the figure ids actually quoted, and the prose left over
+    once each accounted-for figure has been consumed.
+    """
     problems = []
-    body = markdown.strip_blocks(text)
-    known = {r["figure_id"]: r["value_display"] for r in register_rows}
     used, kept, cursor = set(), [], 0
 
     for match in FIG_RE.finditer(body):
@@ -117,13 +119,28 @@ def audit_prose(text: str, register_rows: list[dict]) -> list[str]:
                 f"before it ends {before[-40:]!r}")
             kept.append(before)
     kept.append(body[cursor:])
+    return problems, used, "".join(kept)
 
-    for figure_id in sorted(known):
-        if figure_id not in used:
-            problems.append(
-                f"register row {figure_id!r} is never quoted — a dead row is a "
-                f"figure nobody can check against prose")
-    return problems + scan_untagged("".join(kept))
+
+def dead_rows(register_rows: list[dict], used: set) -> list[str]:
+    return [f"register row {r['figure_id']!r} is never quoted — a dead row is a "
+            f"figure nobody can check against prose"
+            for r in register_rows if r["figure_id"] not in used]
+
+
+def used_figures(text: str, register_rows: list[dict]) -> set:
+    known = {r["figure_id"]: r["value_display"] for r in register_rows}
+    return _scan_tags(markdown.strip_blocks(text), known)[1]
+
+
+def audit_prose(text: str, register_rows: list[dict],
+                check_dead: bool = True) -> list[str]:
+    """Check every tagged figure against its declared cell, then scan the rest."""
+    known = {r["figure_id"]: r["value_display"] for r in register_rows}
+    problems, used, residue = _scan_tags(markdown.strip_blocks(text), known)
+    if check_dead:
+        problems += dead_rows(register_rows, used)
+    return problems + scan_untagged(residue)
 
 
 def audit_tables(text: str, views: dict) -> list[str]:

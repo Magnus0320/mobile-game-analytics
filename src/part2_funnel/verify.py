@@ -8,6 +8,7 @@ disk are then the product of a failed run and must not be committed.
 """
 
 import csv
+import re
 
 from . import audit
 from . import config as C
@@ -185,18 +186,45 @@ def check_segments():
             f"and no named segment sits below the {C.SEGMENT_FLOOR}-user floor")
 
 
+README = C.REPO_ROOT / "README.md"
+# Only this part's own section. A-118 forbids this session the opener and the
+# other parts' sections, and their figures are not this register's to check.
+README_PART2 = re.compile(r"^## Part 2\b.*?(?=^## |\Z)", re.M | re.S)
+
+
+def _audited_documents() -> list[tuple[str, str]]:
+    documents = []
+    if C.REPORT.exists():
+        documents.append(("the report", C.REPORT.read_text()))
+    if README.exists():
+        match = README_PART2.search(README.read_text())
+        if match and match.group(0).strip() != "## Part 2":
+            documents.append(("the README's ## Part 2 section", match.group(0)))
+    return documents
+
+
 def check_register_and_audit():
     register = read_register()
     problems = audit.check_register(register)
     _require(not problems, "register integrity: " + "; ".join(problems))
     notes = audit.selftest()
-    if C.REPORT.exists():
-        text = C.REPORT.read_text()
-        from .tables import VIEWS
-        problems = audit.audit_tables(text, VIEWS) + audit.audit_prose(text, register)
-        _require(not problems, "report audit:\n  - " + "\n  - ".join(problems))
-    return (f"{len(register)} register rows resolve to their declared cells; the audit "
-            f"self-test {len(notes)} cases behaved as required")
+
+    from .tables import VIEWS
+    documents = _audited_documents()
+    if documents:
+        problems, used = [], set()
+        for label, text in documents:
+            used |= audit.used_figures(text, register)
+            problems += [f"{label}: {p}" for p in audit.audit_tables(text, VIEWS)]
+            problems += [f"{label}: {p}"
+                         for p in audit.audit_prose(text, register, check_dead=False)]
+        # A figure quoted in either document is accounted for; one quoted in
+        # neither is a row nobody can check.
+        problems += audit.dead_rows(register, used)
+        _require(not problems, "audit:\n  - " + "\n  - ".join(problems))
+    return (f"{len(register)} register rows resolve to their declared cells and are "
+            f"quoted across {len(documents)} audited document(s); the audit self-test "
+            f"{len(notes)} cases behaved as required")
 
 
 def run_all() -> list[str]:

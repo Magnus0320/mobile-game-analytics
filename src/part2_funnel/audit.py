@@ -27,6 +27,7 @@ EXEMPT_PATTERNS = [
     (r"`[^`]*`", "identifiers and labels in code spans"),
     (r"\]\([^)]*\)", "markdown link targets"),
     (r"§\d+(?:\.\d+)*", "section numbers"),
+    (r"(?m)^#{1,6}\s+\d+(?:\.\d+)*\.?(?=\s)", "this report's own heading numbers"),
     (r"\bA-\d{3}\b", "assumptions.md references"),
     (r"\bv\d+\.\d+\b", "ARCHITECTURE.md version references"),
     (r"\bPart [123]\b", "part names"),
@@ -34,8 +35,9 @@ EXEMPT_PATTERNS = [
     (r"\b\d{4}-\d{2}-\d{2}\b", "ISO dates"),
     (r"\bS[0-3]\b", "funnel step labels"),
     (r"\b(?=[0-9a-f]{7,40}\b)[0-9a-f]*[a-f][0-9a-f]*\b", "commit SHAs"),
-    (r"\b(?:item|reading|step|query|section|figure|row)s?\s+\d+\b",
+    (r"\b(?:[Ii]tem|[Rr]eading|[Ss]tep|[Qq]uery|[Ss]ection|[Ff]igure|[Rr]ow)s?\s+\d+\b",
      "references to this document's own numbered items"),
+    (r"\b\d+ (?:GiB|MiB|TiB)\b", "byte ceilings quoted from §10.1"),
     # thresholds quoted from ARCHITECTURE.md, as literals and nothing wider
     (r"\b1\.0%", "§10.6.4 / §10.6.5 trigger"),
     (r"\b5\.0%", "§10.7.5 caveat trigger"),
@@ -45,6 +47,7 @@ EXEMPT_PATTERNS = [
     (r"\b200\b", "§10.7.5 Part 2 segment floor"),
     (r"\b30\b", "§10.5.3 suppression floor"),
     (r"\b95%", "the interval's confidence level"),
+    (r"\bparts per million\b", "a unit name, not a quantity"),
 ]
 
 # Spelled-out quantities are scanned too -- "twenty" would dodge a digit
@@ -57,7 +60,8 @@ WORD_RE = re.compile(
     r"thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|"
     r"thirty|forty|fifty|hundred|thousand|million|dozen|both|single|once|twice)\b",
     re.I)
-NUMERAL_RE = re.compile(r"\d[\d,]*(?:\.\d+)?%?")
+# The lookbehind keeps identifiers such as GA4 or UTF8 from reading as figures.
+NUMERAL_RE = re.compile(r"(?<![0-9A-Za-z])\d[\d,]*(?:\.\d+)?%?")
 FENCE_RE = re.compile(r"```.*?```", re.S)
 
 

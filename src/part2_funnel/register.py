@@ -13,6 +13,7 @@ P1 = "part2_01_population_reconciliation.csv"
 P2 = "part2_02_data_handling.csv"
 P3 = "part2_03_funnel.csv"
 P4 = "part2_04_out_of_order.csv"
+P5 = "part2_05_progression_matrix.csv"
 P6 = "part2_06_diagnostic_events.csv"
 P7 = "part2_07_level_end_reconciliation.csv"
 P8 = "part2_08_segment_constancy.csv"
@@ -68,11 +69,11 @@ def build(stats: dict) -> Register:
              "count", "Revenue-positive purchase events, quoted from the recon and never recounted")
     r.quoted("rescope_users", f"{P2}:value:section=rescope&metric=distinct users with such an event",
              "count", "Distinct users with a revenue-positive purchase event")
-    r.derived("rescope_coverage_pct", handling["coverage"], "pct",
+    r.derived("rescope_coverage_pct", handling["coverage"], "pct3",
               "Payer coverage of the 15,175-user denominator, against §10.3's 0.5% bar",
               [f"{P2}:value:section=rescope&metric=distinct users with such an event",
                f"{P1}:users:metric=distinct users with at least one event in the window"])
-    r.derived("rescope_event_factor", C.RESCOPE_EVENT_THRESHOLD / handling["revenue_events"], "ratio",
+    r.derived("rescope_event_factor", C.RESCOPE_EVENT_THRESHOLD / handling["revenue_events"], "ratio0",
               "How far short of §10.3's 1,000-event threshold the observed count falls",
               [f"{P2}:value:section=rescope&metric=revenue-positive purchase events"])
     r.derived("rescope_coverage_factor", C.RESCOPE_COVERAGE_THRESHOLD * 100 / handling["coverage"], "ratio",
@@ -90,13 +91,17 @@ def build(stats: dict) -> Register:
 
     # --- the funnel ---------------------------------------------------------
     for step in C.STEPS:
+        if step == "S1":
+            # S0 is universal, so S1's step-to-step conversion IS its share of S0.
+            # Only one of the two is quoted; the funnel table prints both.
+            pass
         r.quoted(f"{step.lower()}_strict", f"{P3}:users_strict:step={step}", "count",
                  f"{step} strict cumulative users: holders of all of S0..{step}")
         r.quoted(f"{step.lower()}_raw", f"{P3}:users_raw:step={step}", "count",
                  f"{step} raw users: holders of {step} regardless of the earlier steps")
         r.quoted(f"{step.lower()}_share_of_s0", f"{P3}:share_of_s0_pct_display:step={step}", "pct",
                  f"{step} strict users as a share of S0")
-        if step != "S0":
+        if step not in ("S0", "S1"):
             r.quoted(f"{step.lower()}_conversion", f"{P3}:step_conversion_pct_display:step={step}",
                      "pct", f"Step-to-step conversion into {step} from the previous strict population")
             r.quoted(f"{step.lower()}_conversion_lo", f"{P3}:step_conversion_lo_display:step={step}",
@@ -118,6 +123,18 @@ def build(stats: dict) -> Register:
                   float(funnel["raw"][step] - strict[step]), "count",
                   f"Users holding {step} but not every earlier step: the gap between the raw and strict counts",
                   [f"{P3}:users_raw:step={step}", f"{P3}:users_strict:step={step}"])
+
+    r.derived("drop_s0_s3_users", float(strict["S0"] - strict["S3"]), "count",
+              "Users present in the window who never completed a level, on the strict population",
+              [f"{P3}:users_strict:step=S0", f"{P3}:users_strict:step=S3"])
+    for step in ("S1", "S2", "S3"):
+        r.quoted(f"{step.lower()}_share_lo", f"{P3}:share_of_s0_lo_display:step={step}",
+                 "pct", f"95% Wilson lower bound on {step}'s share of S0")
+        r.quoted(f"{step.lower()}_share_hi", f"{P3}:share_of_s0_hi_display:step={step}",
+                 "pct", f"95% Wilson upper bound on {step}'s share of S0")
+    r.derived("matrix_patterns", float(stats["matrix"]["patterns"]), "count",
+              "Distinct progression patterns actually observed, of the 32 the five flags allow",
+              [f"{P5}:users:|count"])
 
     # --- out-of-order users -------------------------------------------------
     for key in ("s2_without_s1", "s3_without_s2", "s3_without_s1"):
@@ -159,8 +176,10 @@ def build(stats: dict) -> Register:
     # --- segmentation -------------------------------------------------------
     for dimension in C.PERMITTED_DIMENSIONS:
         slug = dimension.replace(".", "_")
-        r.quoted(f"constancy_{slug}", f"{P8}:share_non_constant_pct_display:dimension={dimension}",
-                 "pct", f"Share of users whose {dimension} is not constant across their own events")
+        if dimension != "device.category":   # quoted once, for both zero dimensions
+            r.quoted(f"constancy_{slug}",
+                     f"{P8}:share_non_constant_pct_display:dimension={dimension}", "pct",
+                     f"Share of users whose {dimension} is not constant across their own events")
         r.quoted(f"constancy_{slug}_users", f"{P8}:users_non_constant:dimension={dimension}",
                  "count", f"Users with more than one distinct {dimension}")
     r.quoted("part1_app_version_constancy",
@@ -183,6 +202,13 @@ def build(stats: dict) -> Register:
             r.derived(f"seg_{slug}_other_users", float(bucket["other_users"]), "count",
                       f"Users in the Other row for {dimension}",
                       [f"{P9}:users_s0:dimension={dimension}&segment=Other&step=S0"])
+
+    for field, slug in (("traffic_source.name", "name"),
+                        ("traffic_source.medium", "medium"),
+                        ("traffic_source.source", "source")):
+        r.quoted(f"traffic_{slug}_pct",
+                 f"{P2}:value:section=traffic_source&metric={field}: top two buckets",
+                 "pct", f"Share of events in the top two buckets of {field}, one a placeholder")
 
     # --- the parallel track (A-172) -----------------------------------------
     r.quoted("track_without_s1", f"{P10}:users:metric=users with no level_start_quickplay (outside S1)",
@@ -212,18 +238,18 @@ def build(stats: dict) -> Register:
              "count", "Users carrying the plays_quickplay user property")
 
     # --- diagnostics --------------------------------------------------------
-    for event in C.DIAGNOSTIC_EVENTS:
+    # Only the diagnostics the prose names individually. The other five are in the
+    # generated table, which the audit verifies by regenerating it from its CSV.
+    for event in ("session_start", "in_app_purchase"):
         slug = event.replace(".", "_")
         r.quoted(f"diag_{slug}_users", f"{P6}:users:event_name={event}", "count",
                  f"Users with at least one {event} event")
-        r.quoted(f"diag_{slug}_events", f"{P6}:events_deduped:event_name={event}", "count",
-                 f"De-duplicated {event} events")
+        if event == "session_start":
+            r.quoted(f"diag_{slug}_events", f"{P6}:events_deduped:event_name={event}",
+                     "count", f"De-duplicated {event} events")
 
     # --- the byte ledger ----------------------------------------------------
     total = stats["ledger"]["total"]
-    r.derived("ledger_total_bytes", float(total), "bytes",
-              "Bytes billed across every Part 2 query",
-              [f"{LEDGER}:bytes_billed:|sum"])
     r.derived("ledger_total_gib", total / 1073741824.0, "gib",
               "Bytes billed across every Part 2 query, in GiB",
               [f"{LEDGER}:bytes_billed:|sum"])

@@ -26,8 +26,14 @@ FIELDS = ["figure_id", "kind", "value_display", "value_num", "unit",
 _FORMATTERS = {
     "count": lambda v: f"{int(round(v)):,}",
     "pct": lambda v: f"{v:.2f}%",
+    # §10.7.6 fixes two decimal places for a rate. The one exception is the
+    # payer-coverage figure, which §10.6.1 and §10.3 quote to three (0.178%
+    # against a 0.5% bar) -- rounding it to 0.18% would lose the document's own
+    # number, so it carries its own unit rather than a rounded one.
+    "pct3": lambda v: f"{v:.3f}%",
     "pp": lambda v: f"{v:.2f} pp",
-    "ratio": lambda v: f"{v:.1f}x",
+    "ratio": lambda v: f"{v:.1f}\u00d7",
+    "ratio0": lambda v: f"{v:.0f}\u00d7",
     "bytes": lambda v: f"{int(round(v)):,}",
     "gib": lambda v: f"{v:.2f} GiB",
     "mib": lambda v: f"{v:.0f} MiB",

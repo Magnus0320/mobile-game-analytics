@@ -65,6 +65,13 @@ def main() -> int:
              "ledger": _ledger_stats()}
 
     written.append(register.build(stats).write())
+
+    # A-165: report tables are generated from their CSVs, never typed. --fill-tables
+    # injects them; every later run regenerates and asserts byte-equality instead.
+    if "--fill-tables" in sys.argv and C.REPORT.exists():
+        from . import markdown
+        C.REPORT.write_text(markdown.fill_blocks(C.REPORT.read_text(), tables.VIEWS))
+        print(f"\nfilled the generated table blocks in {C.REPORT.name}")
     written += figures.build_all()
 
     print("\nwrote:")

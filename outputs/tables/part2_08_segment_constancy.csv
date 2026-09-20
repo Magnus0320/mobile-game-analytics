@@ -1,0 +1,6 @@
+dimension,users_total,users_non_constant,share_non_constant_pct_value,share_non_constant_pct_display,max_distinct_values_per_user,users_with_any_null,distinct_values_overall,segmentation_outcome,attribution_means,note
+app_info.version,15175,1330,8.7644151565,8.76,3,0,34,caveated,version at install,"reported with a caveat naming the share, above §10.7.5's 5.0% trigger; triggers apply per dimension, independently (A-154)"
+geo.country,15175,383,2.5238879736,2.52,7,0,155,reported,country at first observed event,"reported without a caveat; below §10.7.5's 5.0% trigger; triggers apply per dimension, independently (A-154)"
+device.language,15175,33,0.2174629325,0.22,3,0,229,reported,language at first observed event,"reported without a caveat; below §10.7.5's 5.0% trigger; triggers apply per dimension, independently (A-154)"
+device.category,15175,0,0.0000000000,0.00,1,0,2,reported,device category at first observed event,"reported without a caveat; below §10.7.5's 5.0% trigger; triggers apply per dimension, independently (A-154)"
+platform,15175,0,0.0000000000,0.00,1,0,2,reported,platform at first observed event,"reported without a caveat; below §10.7.5's 5.0% trigger; triggers apply per dimension, independently (A-154)"

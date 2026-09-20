@@ -1,0 +1,43 @@
+section,key,users,s1,s2,s3,fail_quickplay,np_start
+funnel_raw,S0,15175,,,,,
+funnel_raw,S1,10166,,,,,
+funnel_raw,S2,8168,,,,,
+funnel_raw,S3,5676,,,,,
+funnel_strict,S0,15175,,,,,
+funnel_strict,S1,10166,,,,,
+funnel_strict,S2,8145,,,,,
+funnel_strict,S3,5672,,,,,
+out_of_order,s2_without_s1,23,,,,,
+out_of_order,s3_without_s1,4,,,,,
+out_of_order,s3_without_s2,0,,,,,
+level_end_user,users_end,8168,,,,,
+level_end_user,users_complete_or_fail,7967,,,,,
+level_end_user,users_fail,6343,,,,,
+level_end_user,users_complete,5676,,,,,
+level_end_user,users_complete_and_fail,4052,,,,,
+level_end_user,end_without_outcome,202,,,,,
+level_end_user,outcome_without_end,1,,,,,
+parallel_track,users_without_s1,5009,,,,,
+parallel_track,users_nonquickplay_start,4774,,,,,
+parallel_track,users_with_neither_start,3054,,,,,
+parallel_track,users_in_both_modes,2819,,,,,
+parallel_track,users_without_s1_with_nonquickplay_start,1955,,,,,
+pattern,s1=1 s2=1 s3=1 fail=1 np=0,3051,true,true,true,true,false
+pattern,s1=0 s2=0 s3=0 fail=0 np=0,3038,false,false,false,false,false
+pattern,s1=0 s2=0 s3=0 fail=0 np=1,1947,false,false,false,false,true
+pattern,s1=1 s2=1 s3=0 fail=1 np=0,1547,true,true,false,true,false
+pattern,s1=1 s2=0 s3=0 fail=0 np=0,1322,true,false,false,false,false
+pattern,s1=1 s2=1 s3=1 fail=0 np=0,1281,true,true,true,false,false
+pattern,s1=1 s2=1 s3=1 fail=1 np=1,1001,true,true,true,true,true
+pattern,s1=1 s2=1 s3=0 fail=1 np=1,726,true,true,false,true,true
+pattern,s1=1 s2=0 s3=0 fail=0 np=1,699,true,false,false,false,true
+pattern,s1=1 s2=1 s3=1 fail=0 np=1,339,true,true,true,false,true
+pattern,s1=1 s2=1 s3=0 fail=0 np=0,146,true,true,false,false,false
+pattern,s1=1 s2=1 s3=0 fail=0 np=1,54,true,true,false,false,true
+pattern,s1=0 s2=1 s3=0 fail=1 np=0,11,false,true,false,true,false
+pattern,s1=0 s2=1 s3=0 fail=1 np=1,6,false,true,false,true,true
+pattern,s1=0 s2=1 s3=1 fail=0 np=0,3,false,true,true,false,false
+pattern,s1=0 s2=0 s3=0 fail=1 np=0,1,false,false,false,true,false
+pattern,s1=0 s2=1 s3=0 fail=0 np=0,1,false,true,false,false,false
+pattern,s1=0 s2=1 s3=0 fail=0 np=1,1,false,true,false,false,true
+pattern,s1=0 s2=1 s3=1 fail=0 np=1,1,false,true,true,false,true

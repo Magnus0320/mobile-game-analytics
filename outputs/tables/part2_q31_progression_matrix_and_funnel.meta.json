@@ -1,0 +1,16 @@
+{
+  "actual_bytes_billed": 333447168,
+  "bytes_processed": 332489198,
+  "divergence_bytes": 957970,
+  "divergence_ratio": 1.0029,
+  "dry_run_estimate_bytes": 332489198,
+  "job_id": "part2_part2_q31_progression_matrix_and_funnel_20260920T042047Z_41670",
+  "note": "Provenance per ARCHITECTURE.md \u00a710.1 and A-086. The source is an external table that no checksum covers, so this file records what authorised the query and what it cost, in place of \u00a77.5's cross-machine byte-identity rule (\u00a79 open question 7). predicted_billed_bytes is A-126's rule max(10 MiB, ceil(estimate -> MiB)); prediction_delta_bytes is what the halt rule tests against 1 MiB.",
+  "predicted_billed_bytes": 333447168,
+  "prediction_delta_bytes": 0,
+  "query_file": "sql/31_part2_progression_matrix_and_funnel.sql",
+  "query_job_date": "2026-09-20T04:20:53Z",
+  "result_file": "part2_q31_progression_matrix_and_funnel.csv",
+  "row_count": 42,
+  "shard_range_covered": "20180612-20181003 (114 shards)"
+}

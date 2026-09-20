@@ -1,0 +1,29 @@
+dimension,segment,is_other,segments_pooled,users_s0,strict_s1,strict_s2,strict_s3,raw_s1,raw_s2,raw_s3
+app_info.version,2.62,false,0,6531,3798,2834,2012,3798,2846,2014
+app_info.version,2.6.30,false,0,3515,2609,2286,1481,2609,2292,1481
+app_info.version,2.6.31,false,0,2680,2248,1784,1263,2248,1787,1265
+app_info.version,2.6.27,false,0,802,632,546,403,632,546,403
+app_info.version,2.59,false,0,412,80,64,54,80,65,54
+app_info.version,Other,true,29,1235,799,631,459,799,632,459
+device.category,mobile,false,0,11774,7404,5875,4029,7404,5895,4032
+device.category,tablet,false,0,3401,2762,2270,1643,2762,2273,1644
+device.language,en-us,false,0,8936,6000,4965,3523,6000,4985,3527
+device.language,en-gb,false,0,1353,834,601,396,834,601,396
+device.language,ja-jp,false,0,743,553,462,359,553,462,359
+device.language,en-ca,false,0,561,387,323,215,387,323,215
+device.language,en-au,false,0,536,406,327,213,406,328,213
+device.language,de-de,false,0,283,197,166,149,197,166,149
+device.language,en-in,false,0,264,154,93,46,154,94,46
+device.language,en,false,0,255,203,167,107,203,167,107
+device.language,Other,true,220,2244,1432,1041,664,1432,1042,664
+geo.country,United States,false,0,8084,5553,4720,3385,5553,4735,3388
+geo.country,India,false,0,1067,598,313,138,598,315,138
+geo.country,Japan,false,0,798,593,489,378,593,489,378
+geo.country,Canada,false,0,682,475,395,267,475,395,267
+geo.country,United Kingdom,false,0,564,391,348,258,391,348,258
+geo.country,Australia,false,0,562,428,354,236,428,356,237
+geo.country,Germany,false,0,291,198,166,145,198,166,145
+geo.country,Mexico,false,0,208,124,97,60,124,98,60
+geo.country,Other,true,142,2919,1806,1263,805,1806,1266,805
+platform,IOS,false,0,7765,6113,5120,3511,6113,5129,3513
+platform,ANDROID,false,0,7410,4053,3025,2161,4053,3039,2163

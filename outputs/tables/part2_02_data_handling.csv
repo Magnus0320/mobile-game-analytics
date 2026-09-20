@@ -1,0 +1,20 @@
+section,metric,value,value_display,note
+rescope,revenue-positive purchase events,27,27,"quoted from recon_05_revenue_population.csv, never recounted (A-167, A-130); a LOWER BOUND, because event_value_in_usd is absent from 15 of the 114 shards and only 24 of the 27 events carry a positive value in it, while all 27 carry a positive price parameter"
+rescope,distinct users with such an event,27,27,quoted from recon_05_revenue_population.csv
+rescope,"payer coverage of the 15,175-user denominator",0.1779242175,0.178%,§10.3's denominator: distinct user_pseudo_id with any event in the range
+rescope,§10.3 event threshold,1000,"1,000",MISSED by a factor of 37
+rescope,§10.3 coverage threshold,0.5,0.5%,MISSED by a factor of 2.8
+rescope,events with a positive event_value_in_usd,24,24,the narrower revenue carrier; the price parameter is the larger and is the one counted
+rescope,shards with no event_value_in_usd column,15,15,"of 114; why 27 is a floor rather than a census (§10.6.1, A-130)"
+rescope,spend_virtual_currency events,9363,"9,363","NOT revenue: a soft-currency sink, and §10.6.1 forbids presenting it as monetization, spend, or purchase behaviour"
+rescope,spend_virtual_currency users,2044,"2,044",see above
+duplicates,raw event rows,5700000,"5,700,000",before §10.7.4 de-duplication
+duplicates,de-duplicated event rows,5699793,"5,699,793","distinct (user_pseudo_id, event_name, event_timestamp)"
+duplicates,duplicate rows removed,207,207,"§10.7.4, A-124; A-103 measured 207 and this build reproduces it exactly"
+duplicates,"duplicate share, parts per million",36,36,of raw rows
+duplicates,event names carrying at least one duplicate,17,17,of 37 event names in the window; the per-name distribution is in part2_q30_population_and_vocabulary.csv
+duplicates,distinct event names in the window,37,37,the complete vocabulary; the four steps and seven diagnostics are a visible selection from it (A-090's precedent)
+identity,rows with a non-null user_id,0,0,"user_id is NULL on all 5,700,000 rows (A-099), so 'a user' means a DEVICE-INSTALL throughout: one person on two devices is two users, a reinstall may be a new user, and no cross-device or unique-people claim is possible (§10.7.3)"
+traffic_source,traffic_source.name: top two buckets,99.9076000000,99.91%,"(direct) at 75.25%; (null) at 24.66% — quoted from recon_07_field_profiles.csv (A-168). §10.7.5 drops traffic source: a dimension with one real bucket plus a placeholder cannot distinguish cohorts, and NO metric in this report is segmented by it"
+traffic_source,traffic_source.medium: top two buckets,99.7848000000,99.78%,"(none) at 75.25%; organic at 24.54% — quoted from recon_07_field_profiles.csv (A-168). §10.7.5 drops traffic source: a dimension with one real bucket plus a placeholder cannot distinguish cohorts, and NO metric in this report is segmented by it"
+traffic_source,traffic_source.source: top two buckets,99.3853000000,99.39%,"(direct) at 75.25%; google-play at 24.14% — quoted from recon_07_field_profiles.csv (A-168). §10.7.5 drops traffic source: a dimension with one real bucket plus a placeholder cannot distinguish cohorts, and NO metric in this report is segmented by it"

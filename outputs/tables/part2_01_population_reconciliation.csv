@@ -1,0 +1,8 @@
+metric,users,share_of_population_pct_display,note
+distinct users with at least one event in the window,15175,100.00,"§10.6.2's population: ALL 15,175 users, per user, not Part 1's install cohort"
+users excluded from the funnel population,0,0.00,"the funnel begins at 'present in the window', so every user in the sample is in S0"
+"of those, users with a first_open event",4319,28.46,Part 1's population. first_open is NOT a funnel step (§10.6.2); this row is here to show Part 2 does not inherit Part 1's restriction
+"of those, users with no first_open event",10856,71.54,"the 71.54% Part 1 had to exclude, and which Part 2 keeps"
+raw event rows before §10.7.4 de-duplication,5700000,,"114 shards x 50,000 rows (A-096); a row count, not a user count"
+event rows after §10.7.4 de-duplication,5699793,,"distinct (user_pseudo_id, event_name, event_timestamp)"
+duplicate rows removed,207,,"§10.7.4, A-124; A-103 measured 207 and this build reproduces it"

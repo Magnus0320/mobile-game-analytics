@@ -1,0 +1,4 @@
+step,violation,description,users,raw_population_denominator,share_of_raw_pct_value,share_of_raw_pct_display,population_denominator,share_of_population_pct_display,trigger_applied,trigger_pct,trigger_fired,note
+S2,s2_without_s1,has S2 but not S1,23,8168,0.2815866797,0.28,15175,0.15,true,1.0,false,"§10.6.4 names this case and attaches the 1.0% trigger to it; A-170 reads 'the step's raw population' as the step holding the violation, and prints the share of the whole population beside it"
+S3,s3_without_s2,has S3 but not S2,0,5676,0.0000000000,0.00,15175,0.00,true,1.0,false,"§10.6.4 names this case and attaches the 1.0% trigger to it; A-170 reads 'the step's raw population' as the step holding the violation, and prints the share of the whole population beside it"
+S3,s3_without_s1,has S3 but not S1,4,5676,0.0704721635,0.07,15175,0.03,false,,,"printed for legibility (A-170), not a case §10.6.4 names: a user with S3 and S2 but no S1 is already counted in s2_without_s1"

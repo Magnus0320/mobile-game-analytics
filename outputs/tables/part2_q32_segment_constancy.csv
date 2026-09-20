@@ -1,0 +1,6 @@
+dimension,users_total,users_non_constant,max_distinct_per_user,users_with_any_null,distinct_values_overall
+app_info.version,15175,1330,3,0,34
+device.category,15175,0,1,0,2
+device.language,15175,33,3,0,229
+geo.country,15175,383,7,0,155
+platform,15175,0,1,0,2

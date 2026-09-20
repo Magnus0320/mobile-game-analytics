@@ -1,0 +1,9 @@
+metric,users,share_of_population_pct_display,note
+users with no level_start_quickplay (outside S1),5009,33.01,the users the funnel counts as not having started a level
+"of those, users who started a NON-quickplay level",1955,12.88,39.03% of the users outside S1; they progressed in a mode §10.6.3's funnel does not cover
+users who started a level in EITHER mode,12121,79.87,against S1's own share; the gap is what the funnel's mode restriction costs
+users who started a level in NEITHER mode,3054,20.13,the users for whom 'did not start a level' is unqualified
+"users with a non-quickplay level_start, all",4774,31.46,matches the recon's own count for level_start exactly
+users active in BOTH modes,2819,18.58,counted inside S1 by the funnel
+users with the plays_progressive user property,4585,,quoted from recon_09_user_properties.csv; points the same way as the event counts
+users with the plays_quickplay user property,3548,,quoted from recon_09_user_properties.csv; the mode the funnel DOES cover is the smaller of the two

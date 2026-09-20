@@ -1,0 +1,15 @@
+level,metric,value,denominator,pct_display,reading,note
+event,level_end_quickplay events,349715,,,,de-duplicated (§10.7.4); the recon's raw count is 349729
+event,level_complete_quickplay events,191078,,,,de-duplicated; raw 191088
+event,level_fail_quickplay events,137032,,,,de-duplicated; raw 137035
+event,complete + fail,328110,,,,"raw 328123; §10.6.5 quotes 328,123 on the raw basis"
+event,shortfall: ends carrying no outcome,21605,349715,6.18,,"§10.6.5 quotes 21,606 and 6.18% on the raw basis; the de-duplicated shortfall is 21605, a difference of 1 event(s), and the whole difference is the duplicate rows removed from the three events"
+user,users with level_end_quickplay (S2),8168,,,,the denominator of A-164's directed reading
+user,users with level_complete_quickplay,5676,,,,
+user,users with level_fail_quickplay,6343,,,,
+user,users with either outcome (union),7967,,,,the denominator of reading 3
+user,users with BOTH outcomes,4052,,,,the users the arithmetic parallel double-counts; this is why reading 2 returns an excess
+user,users with an outcome but no level_end_quickplay,1,,,,"the reverse direction, printed so the reconciliation closes both ways"
+user,shortfall: users with S2 and neither outcome,202,8168,2.47,1 (DIRECTED),"A-164's directed reading, and the figure §10.6.5's 1.0% trigger is tested against"
+user,arithmetic parallel: (complete + fail - end) / end,3851,8168,47.15,2,"an EXCESS, not a shortfall: it exists only because users holding both outcomes are counted twice, so a shortfall trigger cannot fire against it for the reason it was written"
+user,shortfall over the outcome union,202,7967,2.54,3,reading 1's numerator over a denominator the event-level figure never uses

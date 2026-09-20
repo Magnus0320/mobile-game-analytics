@@ -1,12 +1,13 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.6. §1–§6 are Part 3's pre-registration and are **frozen** as of
-commit `c6d72f83` (v1.2); Part 3 is complete and its report cites that commit. No
-version after v1.2 changes anything inside §1–§6. The recon is complete at `70c5475`
-and **Part 1 is complete**; v1.6 settles the three challenges Part 1 raised (A-134,
-A-135, A-136) and four defects its build exposed. **§10.6 — Part 2's specification —
-is unaltered by v1.6**; see the note at its head for which shared rules changed
-around it. §11 records what changed in each version.
+**Status:** v1.7 — **the final architecture pass.** All three parts are built,
+committed and pushed. §1–§6 are Part 3's pre-registration and are **frozen** as of
+commit `c6d72f83` (v1.2); no version after v1.2 changes anything inside them. v1.7
+closes the one challenge Part 2 raised (A-164) and settles the README opener, which
+A-118 had reserved until all three analyses existed. Nothing else is re-specified:
+Parts 1, 2 and 3 are complete and their reports are committed. §11 records what
+changed in each version, and §11's closing note says what happens if a later change
+is ever needed.
 
 **Purpose.** This document fixes the decisions that must not be made after seeing
 results. Implementation sessions read it and follow it. They do not edit it.
@@ -1124,18 +1125,61 @@ failure this whole project is built to avoid.
 
 ### 7.6 README requirement
 
-`README.md` opens with **exactly three sentences that a product manager could act
-on**, before any heading, badge, or "this repository contains":
+The opener is the repository's front door. v1.0 through v1.6 required **exactly three
+sentences a product manager could act on** — what was tested and on how many players,
+the estimated effect with its interval, the recommendation and the one thing that would
+change it. That was right for a repository holding one analysis. It is wrong for one
+holding three, and v1.7 replaces it.
 
-1. What was tested, on how many players, and over what horizon.
-2. The estimated effect on 7-day retention, with its interval.
-3. The recommendation, and the one thing that would change it.
+**The tension, and how it resolves.** Part 3 produces a recommendation; Parts 1 and 2
+produce findings and have no recommendation section at all (§10.5, §10.6). An opener
+leading with Part 3's recommendation implies the other two also recommend something,
+which is precisely what those sections forbid them from doing — two thirds of the
+repository would be misrepresented by its own front page. An opener averaging across
+all three says nothing anyone could act on. So **the opener's job changes, and
+"actionable" survives the change**: it is no longer *the decision*, it is **the single
+most actionable statement each analysis supports, with the population it describes named
+in the same sentence**. For Part 3 that statement is a recommendation. For Parts 1 and 2
+it is a figure with its population — which is actionable in the way that matters to a
+reader deciding what they may quote and of whom.
 
-No methodology in those three sentences. No hedging language. They may only be
-written once Part 3's numbers exist, every figure in them must be traceable to a
-file in `outputs/`, and they must not assert anything §6 says the data cannot
-support. Everything else — setup, reproduction steps, structure, per-part summaries
-— goes below them.
+**Structure: exactly *n* + 2 sentences for *n* analyses** — five, for the three in this
+repository — before any heading, badge, or "this repository contains":
+
+1. **The frame.** What the repository holds: the analyses, the datasets, and that these
+   are separate analyses rather than one study. No adjectives and no claims.
+2. **One sentence per analysis, in repository order** — Part 1, then Part 2, then
+   Part 3, not build order. Each states the single most actionable thing that analysis
+   supports and **names its population in the same sentence**.
+3. **One closing sentence: the limitation that bounds every analysis here**, chosen as
+   the one a reader would otherwise wrongly assume away.
+
+Constraints, all checkable:
+
+- **Every sentence names its population.** This is the anti-overclaim device the
+  three-sentence version never needed and the longer version cannot do without:
+  "classic D7 is 5.67%" and "classic D7 among users with an observed install event is
+  5.67%" are different claims, and only the second is true.
+- **No sentence for Part 1 or Part 2 may be phrased as a recommendation.** Neither part
+  has one, and the opener may not manufacture one by tone.
+- **No cross-part inference.** No "and therefore", and no sentence whose subject spans
+  two analyses. Synthesis across parts, if it is worth writing at all, is a section
+  below the opener and is not the opener.
+- **Quoted figures only.** Every figure must appear verbatim as a cell of a committed
+  table, and **derived figures are not permitted in the opener at all** (§7.5). If a
+  sentence needs one, the relevant part's renderer emits it as a cell first and the
+  opener quotes that cell. This constraint is what lets the opener be written without a
+  renderer of its own, and it is a real restriction rather than a convenience.
+- **At most 45 words per sentence.**
+- **No sentence may assert anything that part's own negative-results section forbids.**
+- No methodology and no hedging language. Everything else — setup, reproduction steps,
+  structure, per-part summaries — goes below the opener.
+
+**Who writes it.** The **architecture session**, which is the only party with all three
+analyses in view and the party A-118 reserved the decision for. §8 grants it the opener
+region — everything in `README.md` above the first `##` heading — and grants it to no
+one else. Each part's own `## Part N` section stays with that part's session, as it
+always has.
 
 ### 7.7 Execution order
 
@@ -1242,9 +1286,11 @@ what recon finds.
 - `outputs/tables/part3_*`, `outputs/figures/part3_*`, `outputs/run_manifest.json`
 - `data/raw/` and `data/interim/` contents (git-ignored) and their `.gitkeep` files
 - `run_part3.sh`
-- `README.md` — the three-sentence opener and a `## Part 3` section. It creates
-  empty placeholder headings `## Part 1` and `## Part 2` and writes no content under
-  them.
+- `README.md` — its `## Part 3` section, and (as the first session) the original
+  three-sentence opener. It creates empty placeholder headings `## Part 1` and
+  `## Part 2` and writes no content under them. **The opener region passed to the
+  architecture session in v1.7** (§7.6), once all three analyses existed; Part 3's
+  `## Part 3` section remains this session's.
 - `requirements.txt`, `requirements.lock.txt`, `.python-version`, `.gitignore` — it
   creates these because it is first. From that point they are **append-only** for
   later sessions: a later session may add a dependency, and may not change or remove
@@ -1297,7 +1343,7 @@ what recon finds.
   `assumptions.md` `challenge` entry relayed to the architecture session.
 - **Anything belonging to Part 3.** `src/part3_experiment/**`, `reports/part3_*`,
   `outputs/*part3_*`, `outputs/run_manifest.json`, `run_part3.sh`, the README's
-  three-sentence opener and its `## Part 3` section, and `data/**`. Part 3 is
+  opener region and its `## Part 3` section, and `data/**`. Part 3 is
   complete, committed, and cites a frozen pre-registration; nothing may perturb it.
 - `sql/10`–`sql/99` — every range outside `00`–`09`
 - `src/part1_*`, `src/part2_*`, `reports/part1_*`, `reports/part2_*`, and the
@@ -1339,12 +1385,21 @@ from what it found, that belief is an `assumptions.md` `challenge` entry, not co
 
 **Neither build session may touch:** `ARCHITECTURE.md`; anything belonging to Part 3
 (`src/part3_experiment/**`, `reports/part3_*`, `outputs/*part3_*`,
-`outputs/run_manifest.json`, `run_part3.sh`, `data/**`, the README's three-sentence
-opener and its `## Part 3` section); anything belonging to the recon session
+`outputs/run_manifest.json`, `run_part3.sh`, `data/**`, and its `## Part 3` section);
+the README's **opener region**, which belongs to the architecture session (§7.6);
+anything belonging to the recon session
 (`sql/00`–`09`, `src/recon/**`, `outputs/tables/recon_*`,
 `reports/recon_ga4_sample.md`); the other build session's paths; any `outputs/` file
 whose basename does not begin with its own part prefix; existing `assumptions.md`
 entries; or existing git history.
+
+**The architecture session owns the README opener region** — everything in
+`README.md` above the first `##` heading — under §7.6, and no other session may write
+there. This is the only path in the repository the architecture session writes besides
+`ARCHITECTURE.md` itself, and the grant exists because the opener is the one piece of
+prose that must speak for all three analyses at once. It is bound by §7.6's
+quoted-figures-only rule, which is what lets it be written by a session that has no
+renderer.
 
 **Two sessions, run sequentially — Part 1, then Part 2.** Not one session and not two
 in parallel. Two, because each part is a separate deliverable with its own report and
@@ -1423,15 +1478,14 @@ a stated default, so nothing is blocked on it.
    option and interacts with recon item 12; it is left open rather than decided
    before the byte figures exist.
 
-8. **Should the README's three-sentence opener become project-level? — OPEN, with a
-   stated default.** Raised by v1.5. §7.6's opener is about Part 3's experiment, and
-   the repository will soon hold three parts. Default assumed (A-118): the opener
-   **stays Part 3's and neither build session may touch it**, because two sessions
-   editing the top of the README is a collision with no upside, and because Part 3
-   remains the highest-signal deliverable a reader should meet first. Whether it
-   should be rewritten as a project-level opener once Parts 1 and 2 land is a
-   decision for the architecture session at that point, not for a build session
-   mid-flight.
+8. **Should the README's three-sentence opener become project-level? — CLOSED, yes.**
+   Raised by v1.5, answered by v1.7 once all three analyses existed. A-118's default —
+   the opener stays Part 3's and no build session touches it — held throughout the
+   builds and did exactly what it was for: it kept the decision from being made by
+   whichever session happened to run last. §7.6 now requires an opener of **one
+   sentence per analysis plus a frame and a limitation**, written by the architecture
+   session under a §8 grant, with every sentence naming its population and no sentence
+   for Parts 1 or 2 phrased as a recommendation (A-176, A-177).
 
 **If a later part raises a new question**, it is added here with a stated default so
 that work is never blocked on an answer, and recorded in `assumptions.md` the same
@@ -2164,9 +2218,70 @@ These are reported once in a labelled table with their event and user counts, an
 **One required reconciliation.** `level_end_quickplay` shows 349,729 events while
 `level_complete_quickplay` plus `level_fail_quickplay` sum to 328,123 — a shortfall of
 21,606 events, **6.18%** of `level_end_quickplay`. Part 2 reports this reconciliation at
-both event and user level. A shortfall **above 1.0%** is a finding with a stated
-interpretation — a third outcome type, or ends emitted without an outcome — and it is
-**not** silently reconciled, and not used to redefine S2.
+both event and user level, and it is **not** silently reconciled and **not** used to
+redefine S2. (Those three figures are pre-de-duplication, as v1.5 quoted them from the
+recon; a report de-duplicates first (§10.7.4), so its event counts sit marginally below
+them by exactly the duplicate rows removed, and both bases are carried in the
+reconciliation table — A-166.)
+
+**The user-level comparison, settled in v1.7.** A-164 raised that this section required
+the reconciliation "at both event and user level" while fixing only the event-level
+arithmetic, and that the event formula does not translate: a user holding both a
+complete and a fail appears in both outcome counts, and **4,052** users on this export
+do. Three readings were available, and **reading 1 governs**:
+
+| Reading | Definition | On this export |
+|---|---|---|
+| **1 — governs** | Users with `level_end_quickplay` and **neither** outcome, over the users with S2 | **202 of 8,168 = 2.47%** |
+| 2 — rejected | `(users(complete) + users(fail) − users(end)) / users(end)`, the literal translation | +47.15%, an **excess** |
+| 3 — rejected | Reading 1's numerator over the users with **either** outcome | 202 of 7,967 = 2.54% |
+
+- **Why reading 1.** The event-level figure measures **ends that carry no outcome**.
+  A user-level figure is a reconciliation *of it* only if it measures the same thing at
+  user grain, and reading 1 is exactly that — the same population, counted in users
+  instead of events. The two shares, 6.18% and 2.47%, are **two views of one population,
+  not two findings**, and a report must say so.
+- **Why not reading 2.** It measures how many users hold **both** outcomes, which is a
+  different quantity that happens to be computable from the same three counts. Its sign
+  is governed by the overlap rather than by the gap, so as soon as any user holds both
+  outcomes the statistic turns positive — **a shortfall trigger tested against it can
+  never fire for the reason it was written**. That is a structural defect, not an
+  artefact of this export.
+- **Why not reading 3.** Its denominator is the users with either outcome, and its
+  numerator is the users with **neither** — so numerator and denominator are
+  **disjoint**. It is a ratio between two non-overlapping sets, not a share of anything.
+  The arithmetic is worth seeing: 7,967 users have an outcome, of whom exactly **1** has
+  no end, so 7,966 + 202 = 8,168, which closes against reading 1's denominator and not
+  against reading 3's.
+- **The 1.0% trigger applies to reading 1 and to nothing else.**
+
+**What a firing reconciliation trigger obliges — specified in v1.7.** v1.5 said only
+"a finding with a stated interpretation", which left the content of that interpretation
+to the build session — the gap §10.7.7 exists to prevent elsewhere. When the trigger
+fires, the report must state all of:
+
+1. **The asymmetry and its direction, in counts, both ways** — how many ends carry no
+   outcome, and how many outcomes carry no end. **The asymmetry is the finding, not the
+   percentage**: on this export essentially every user with an outcome records the
+   preceding end (1 exception in 7,967) while 202 ends carry none, so whatever is
+   happening affects ends and not outcomes. The share is the magnitude; the direction is
+   the result.
+2. **The components of all three readings**, so a reader can rebuild any of them — users
+   per outcome, users holding both, the union, and the outcome-without-end count.
+3. **The candidate explanations the export cannot distinguish between** — at minimum
+   abandonment mid-attempt, an outcome type the event vocabulary does not name, and loss
+   of the outcome event in the sample — together with an explicit statement that the
+   report does not choose between them.
+4. **That the step is not redefined**, and that no funnel figure moves as a result.
+5. **That the event-level and user-level shares are two views of one population.**
+
+And may **not** conclude: a cause; a data-quality verdict on the export as a whole; an
+estimate of how many users "really" completed or failed; or any correction applied to
+any count. **A firing trigger is a licence to say more, never to change anything.**
+
+**Below the trigger**, the reconciliation is still printed at both levels with all
+components, and a single sentence stating the figures discharges the requirement — the
+five obligations above do not apply.
 
 #### 10.6.6 Required outputs
 
@@ -2396,11 +2511,13 @@ no direction and no disclosure makes it admissible.
 
 ## 11. Document control
 
-- **Version:** 1.6. **Written:** 2026-09-10, before any data access. **Amended:**
+- **Version:** 1.7 — final. **Written:** 2026-09-10, before any data access.
+  **Amended:**
   2026-09-10 (v1.1, then v1.2), both before any data access and before the repository
   was initialised; 2026-09-11 (v1.3 and v1.4), after Part 3 was completed and
   committed; 2026-09-12 (v1.5), after the recon completed at `70c5475`; 2026-09-17
-  (v1.6), after Part 1 completed. No version after v1.2 touches §1–§6.
+  (v1.6), after Part 1 completed; 2026-09-20 (v1.7), after Part 2 completed and all
+  three parts were built, committed and pushed. No version after v1.2 touches §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -2839,3 +2956,93 @@ no direction and no disclosure makes it admissible.
   Part 3 is complete, and its report cites that commit. §7.5's derived-figure rule is
   the only v1.6 change that would have altered how Part 3 was audited had it existed
   then; it is **not applied retroactively**, and Part 3's report is not reopened.
+
+### v1.7 — 2026-09-20 — final pass
+
+- **Sections touched:** header, §7.6, §8, §9, §10.6.5, §11. **None inside §1–§6.**
+- **Substantive change:**
+  - **§10.6.5 — A-164 settled, both halves.** **Which user-level figure the
+    reconciliation means:** *reading 1* — users with `level_end_quickplay` and neither
+    outcome, over the users with S2, **202 of 8,168 = 2.47%** — and the 1.0% trigger
+    applies to it and to nothing else. Reading 2, the literal translation of the event
+    formula, is rejected because **4,052** users hold both a complete and a fail, so its
+    sign is governed by the overlap rather than the gap: it returns an **excess** of
+    47.15%, and a shortfall trigger tested against it **can never fire for the reason it
+    was written** — a structural defect, not an artefact of this export. Reading 3 is
+    rejected on a sharper ground than v1.5's: its numerator is the users with **neither**
+    outcome and its denominator the users with **either**, so the two sets are
+    **disjoint** and the ratio is not a share of anything; the arithmetic that does close
+    is 7,966 + 202 = 8,168, against reading 1's denominator. Recorded as facts: the
+    4,052 both-holders, the single user with an outcome and no end, and the 6.18%
+    event-level shortfall — plus a note that v1.5's three event figures are
+    pre-de-duplication, so a report's counts sit below them by exactly the duplicate rows
+    (A-166), with both bases carried in the table.
+  - **§10.6.5 — what a firing trigger obliges.** v1.5 stated a 1.0% trigger and then
+    only "a finding with a stated interpretation", leaving the content of that
+    interpretation to the build session — the gap §10.7.7 exists to prevent elsewhere,
+    reappearing three sections away. A firing trigger now **requires** five statements:
+    the asymmetry and its direction in counts both ways, with the explicit note that
+    **the asymmetry is the finding and the percentage only its magnitude**; the
+    components of all three readings; the candidate explanations the export cannot
+    distinguish between, and that the report does not choose among them; that the step is
+    not redefined and no funnel figure moves; and that the event-level and user-level
+    shares are two views of one population. It **may not** conclude a cause, a
+    data-quality verdict on the export, an estimate of how many users "really" completed
+    or failed, or any correction to any count — **a firing trigger is a licence to say
+    more, never to change anything.** Below the trigger, the reconciliation is still
+    printed in full and one sentence discharges it.
+  - **§7.6 — the opener requirement replaced.** Three sentences was right for one
+    analysis and wrong for three: Part 3 recommends while Parts 1 and 2 have no
+    recommendation section (§10.5, §10.6), so leading with Part 3's recommendation
+    misrepresents two thirds of the repository by its own front page, and averaging
+    across all three says nothing actionable. The opener's **job** therefore changes —
+    from *the decision* to **the single most actionable statement each analysis supports,
+    with its population named in the same sentence** — and "actionable" survives the
+    change, because what a reader can act on from Parts 1 and 2 is a figure plus the
+    population it does and does not describe. Structure: **exactly *n* + 2 sentences for
+    *n* analyses** — a frame, one per analysis in repository order, and one closing
+    limitation that bounds all three. Constraints: every sentence names its population;
+    no Part 1 or Part 2 sentence is phrased as a recommendation; **no cross-part
+    inference**; **quoted figures only, with derived figures barred from the opener
+    entirely** (§7.5), which is what lets it be written by a session with no renderer;
+    at most 45 words per sentence; nothing a part's negative-results section forbids.
+  - **§8 — the opener has an owner.** The **architecture session** owns the
+    `README.md` opener region, everything above the first `##` heading, and no other
+    session may write there; it is the only repository path besides `ARCHITECTURE.md`
+    that the architecture session writes. Part 3's grant is amended to record that it
+    wrote the original opener as the first session and that the region passed onward in
+    v1.7; the build sessions' prohibition now names the "opener region" rather than "the
+    three-sentence opener". Each part's `## Part N` section stays with its own session.
+  - **§9 — open question 8 closed, yes.** A-118's default held through every build and
+    did what it was for: it kept the opener from being written by whichever session
+    happened to run last.
+- **assumptions.md:** added **A-175 through A-178**. Partially superseded by named
+  field: A-121 (`Decision`, by A-175), A-032 (`Decision`, by A-176), A-118 (`Decision`,
+  by A-177). Status lines annotated on all three. A-164, Part 2's only challenge, is
+  answered by A-175.
+- **Touched §1–§6:** **No.** Every change is in the header, §7.6, §8, §9, §10.6.5 or
+  §11. **Part 3's pre-registration freeze is unaffected** — it attached at v1.2, commit
+  `c6d72f83`, Part 3 is complete, and its report cites that commit. Nothing in v1.7
+  re-specifies built work: §10.6.5's settlement matches what Part 2 implemented under
+  direction and adds no obligation Part 2's report does not already discharge, and the
+  §7.6 change alters prose that has not been written against the new rule yet.
+
+---
+
+## Closing note — the architecture series ends here
+
+v1.7 is the last planned pass. All three parts are built, committed and pushed; the
+recon is closed; every challenge either session raised — A-095, A-134, A-135, A-136,
+A-164 — is answered in the document rather than in a build. Two things remain open by
+design and should not be mistaken for unfinished work: **§9's open question 7**, whether
+BigQuery-derived outputs should be brought under §7.5's byte-identity rule, which waits
+on a materialised-extract decision that nothing now depends on; and the **§7.6 opener
+itself**, which this version specifies and the architecture session writes next.
+
+**If a later change is ever needed**, the protocol in §11 is unchanged and does not
+expire: a session appends a `challenge` or `finding` to `assumptions.md`, the
+architecture session issues v1.8 in the four-field format, and **§1–§6 stay frozen** —
+Part 3's report cites `c6d72f83` and reopening its pre-registration would invalidate a
+published result rather than improve it. The same applies in weaker form to Parts 1 and
+2: their specifications may be amended for a future part's benefit, but their committed
+reports are not reopened to match, and any amendment says so explicitly.

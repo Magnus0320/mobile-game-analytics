@@ -236,6 +236,12 @@ def build(stats: dict) -> Register:
              "count", "Users carrying the plays_progressive user property")
     r.quoted("track_plays_quickplay", f"{P10}:users:metric=users with the plays_quickplay user property",
              "count", "Users carrying the plays_quickplay user property")
+    r.derived("quickplay_property_undercount_ratio",
+              float(strict["S1"]) / track["plays_quickplay"], "ratio",
+              "How far the plays_quickplay user property falls below the observed count "
+              "of users with a level_start_quickplay event",
+              [f"{P3}:users_strict:step=S1",
+               f"{P10}:users:metric=users with the plays_quickplay user property"])
 
     # --- diagnostics --------------------------------------------------------
     # Only the diagnostics the prose names individually. The other five are in the

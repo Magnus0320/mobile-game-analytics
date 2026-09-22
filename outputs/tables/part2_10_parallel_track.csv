@@ -5,5 +5,5 @@ users who started a level in EITHER mode,12121,79.87,against S1's own share; the
 users who started a level in NEITHER mode,3054,20.13,the users for whom 'did not start a level' is unqualified
 "users with a non-quickplay level_start, all",4774,31.46,matches the recon's own count for level_start exactly
 users active in BOTH modes,2819,18.58,counted inside S1 by the funnel
-users with the plays_progressive user property,4585,,quoted from recon_09_user_properties.csv; points the same way as the event counts
-users with the plays_quickplay user property,3548,,quoted from recon_09_user_properties.csv; the mode the funnel DOES cover is the smaller of the two
+users with the plays_progressive user property,4585,,"quoted from recon_09_user_properties.csv; close to the 4,774 users with an observed non-quickplay level start, but the plays_* properties have undocumented semantics and are not used here to compare the sizes of the two modes. Corrected 2026-09-22 (A-182): this note previously read 'points the same way as the event counts'"
+users with the plays_quickplay user property,3548,,"quoted from recon_09_user_properties.csv; NOT a measure of mode participation -- 10,166 users have an observed level_start_quickplay against this property's 3,548, an undercount of about 2.9x, and the property's semantics are undocumented. Corrected 2026-09-22 (A-182): this note previously claimed the mode the funnel covers is the smaller of the two, which the observed level starts reverse"

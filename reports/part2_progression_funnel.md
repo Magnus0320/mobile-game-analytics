@@ -593,7 +593,18 @@ and 29<!--fig:seg_app_info_version_pooled--> are pooled, into an Other row of
 
 - **Real traffic, at any grain.** Every shard holds exactly
   50,000<!--fig:shard_rows--> rows, so no count in this report measures how many people
-  played this game. The funnel's *shares* are what the sample supports.
+  played this game. **Counts are ruled out outright, and shares are not thereby
+  established:** whether a share computed on this extract transfers to the property's
+  real population depends on the sampling method, and the export does not document one.
+
+  *Corrected 2026-09-22 (A-183).* This bullet previously ended "The funnel's *shares* are
+  what the sample supports". That asserts a transfer nothing here establishes, and it is
+  the largest unearned claim this part had available: the funnel's shares are the entirety
+  of what Part 2 reports, so a sentence saying they are supported says the whole of this
+  part's output carries to the real population. The wording was inherited from §10.7.1,
+  which until v1.8 ended a bullet with "rates within a cohort are the only quantities the
+  sample supports" and now says counts are ruled out and rates unestablished. The
+  specification's error did not make this report's sentence true.
 
 - **Why an end carries no outcome.** §6 gives the size of the population and says plainly
   that the export does not record the reason.
@@ -621,13 +632,31 @@ and 29<!--fig:seg_app_info_version_pooled--> are pooled, into an Other row of
 | users with the plays_quickplay user property | 3,548 |  |
 <!--/table-->
 
-  The user properties point the same way: `plays_progressive` covers
+  **The `plays_*` user properties do not measure mode participation, and no comparative
+  between the modes rests on them here.** `plays_progressive` covers
   4,585<!--fig:track_plays_progressive--> users against `plays_quickplay`'s
-  3,548<!--fig:track_plays_quickplay-->, so **the mode this funnel does not cover is the
-  larger of the two**. S1's 66.99%<!--fig:s1_share_of_s0--> is therefore a floor on
-  "started playing" rather than a measure of it, and the
-  33.01 pp<!--fig:drop_s0_s1_pp--> loss at the first step is not
-  33.01 pp<!--fig:drop_s0_s1_pp--> of players who never engaged with the game.
+  3,548<!--fig:track_plays_quickplay-->, but 10,166<!--fig:s1_strict--> users have an
+  observed `level_start_quickplay` against 4,774<!--fig:track_np_users--> with a
+  non-quickplay level start. **By observed play, quickplay is the larger mode**, and the
+  property undercounts observed quickplay participation by
+  2.9×<!--fig:quickplay_property_undercount_ratio-->. Its semantics are undocumented.
+
+  *Corrected 2026-09-22 (A-182).* This passage previously read "the mode this funnel does
+  not cover is **the larger** of the two", drawn from the two property counts alone. Both
+  counts are correct and the inference was not: a user property is not a participation
+  measure unless something establishes that it is, and checking it against observed level
+  starts — the check that should have been run when the comparative was first written —
+  reverses the direction. The same inference was published in the note on the
+  `plays_quickplay` row of `outputs/tables/part2_10_parallel_track.csv`, and in different
+  words on the `plays_progressive` row; both notes are corrected at their source in the
+  renderer and regenerated, never edited in the file.
+
+  **What this bullet is for does not depend on which mode is larger.** S1's
+  66.99%<!--fig:s1_share_of_s0--> is a floor on "started playing" rather than a measure of
+  it, because 1,955<!--fig:track_without_s1_with_np--> users outside S1 started a level in
+  a mode this funnel does not count; and the 33.01 pp<!--fig:drop_s0_s1_pp--> loss at the
+  first step is therefore not 33.01 pp<!--fig:drop_s0_s1_pp--> of players who never
+  engaged with the game.
 
   §10.6.3 fixes the four steps and this build does not change them.
   4,774<!--fig:track_np_users--> users have a non-quickplay level start in total, of whom

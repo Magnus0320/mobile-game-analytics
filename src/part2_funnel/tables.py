@@ -586,16 +586,26 @@ def parallel_track() -> tuple[str, dict]:
          "users": int(_recon_row("recon_09_user_properties.csv",
                                  user_property_key="plays_progressive")["distinct_users"]),
          "share_of_population_pct_display": "",
-         "note": "quoted from recon_09_user_properties.csv; points the same way as the event counts"},
+         # A-182 names the plays_quickplay row only, but this note carried the same
+         # inference in different words, so it is corrected with it and the fact is
+         # disclosed rather than the row left standing.
+         "note": "quoted from recon_09_user_properties.csv; close to the 4,774 users with an observed non-quickplay level start, but the plays_* properties have undocumented semantics and are not used here to compare the sizes of the two modes. Corrected 2026-09-22 (A-182): this note previously read 'points the same way as the event counts'"},
         {"metric": "users with the plays_quickplay user property",
          "users": int(_recon_row("recon_09_user_properties.csv",
                                  user_property_key="plays_quickplay")["distinct_users"]),
          "share_of_population_pct_display": "",
-         "note": "quoted from recon_09_user_properties.csv; the mode the funnel DOES cover is the smaller of the two"},
+         # Corrected 2026-09-22 under A-181, recorded in A-182. This note previously
+         # read "the mode the funnel DOES cover is the smaller of the two" -- an
+         # inference from two property counts that the observed level starts reverse.
+         "note": "quoted from recon_09_user_properties.csv; NOT a measure of mode participation -- 10,166 users have an observed level_start_quickplay against this property's 3,548, an undercount of about 2.9x, and the property's semantics are undocumented. Corrected 2026-09-22 (A-182): this note previously claimed the mode the funnel covers is the smaller of the two, which the observed level starts reverse"},
     ]
     name = write_csv("part2_10_parallel_track.csv",
                      ["metric", "users", "share_of_population_pct_display", "note"], rows)
+    props = {k: int(_recon_row("recon_09_user_properties.csv",
+                               user_property_key=k)["distinct_users"])
+             for k in ("plays_progressive", "plays_quickplay")}
     return name, {"without_s1": without_s1, "without_s1_with_np": with_np,
+                  **props,
                   "share_of_outside_s1": pct(with_np, without_s1),
                   "either_mode": either, "neither": g("users_with_neither_start"),
                   "np_users": g("users_nonquickplay_start"),

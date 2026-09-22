@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.7 — **the final architecture pass.** All three parts are built,
+**Status:** v1.8 — **the final architecture pass.** All three parts are built,
 committed and pushed. §1–§6 are Part 3's pre-registration and are **frozen** as of
 commit `c6d72f83` (v1.2); no version after v1.2 changes anything inside them. v1.7
 closes the one challenge Part 2 raised (A-164) and settles the README opener, which
@@ -1151,8 +1151,13 @@ repository — before any heading, badge, or "this repository contains":
 2. **One sentence per analysis, in repository order** — Part 1, then Part 2, then
    Part 3, not build order. Each states the single most actionable thing that analysis
    supports and **names its population in the same sentence**.
-3. **One closing sentence: the limitation that bounds every analysis here**, chosen as
-   the one a reader would otherwise wrongly assume away.
+3. **One closing sentence: the limitation that most constrains what a reader may
+   quote, naming which analyses it bounds.** Amended in v1.8: v1.7 required "the
+   limitation that bounds every analysis here", and drafting the opener showed that too
+   strong for a repository whose parts read two different datasets — the strongest
+   limitation here, the GA4 sampling cap, bounds two of three analyses and does not
+   touch Part 3 at all. Naming the scope is better than demoting the limitation to find
+   one that spans everything.
 
 Constraints, all checkable:
 
@@ -1162,9 +1167,12 @@ Constraints, all checkable:
   5.67%" are different claims, and only the second is true.
 - **No sentence for Part 1 or Part 2 may be phrased as a recommendation.** Neither part
   has one, and the opener may not manufacture one by tone.
-- **No cross-part inference.** No "and therefore", and no sentence whose subject spans
-  two analyses. Synthesis across parts, if it is worth writing at all, is a section
-  below the opener and is not the opener.
+- **No cross-part inference — in the per-analysis sentences.** No "and therefore", and
+  no per-analysis sentence whose subject spans two analyses. Synthesis across parts, if
+  it is worth writing at all, is a section below the opener and is not the opener.
+  Scoped in v1.8: the closing limitation sentence spans analyses **by construction**,
+  since it names which ones it bounds, and v1.7's unscoped ban would have forbidden the
+  sentence the same section requires.
 - **Quoted figures only.** Every figure must appear verbatim as a cell of a committed
   table, and **derived figures are not permitted in the opener at all** (§7.5). If a
   sentence needs one, the relevant part's renderer emits it as a cell first and the
@@ -2303,7 +2311,10 @@ Committed under `outputs/tables/part2_*` and `outputs/figures/part2_*`:
 #### 10.7.1 The downsampling disclosure
 
 **Every shard holds exactly 50,000 rows** (A-096). That uniformity is not traffic; it is
-a sampling cap. Both reports carry this as a top-level section, and the README carries
+an artefact of how the sample was drawn — and what method was used is undocumented, so
+*exactly 50,000 rows* is the whole of what is established, not a truncation mechanism.
+Amended in v1.8: this passage previously called it "a sampling cap", which asserts a
+mechanism the export does not evidence. Both reports carry this as a top-level section, and the README carries
 one sentence of it:
 
 - Parts 1 and 2 describe a **50,000-events-per-day sample** of this property, not the
@@ -2312,7 +2323,13 @@ one sentence of it:
   week, not users, not events per day.
 - **No growth or trend claim may be made from volume.** A rise in installs per week
   across the 16 cohorts is a change in what the sample captured, not a change in
-  acquisition. Rates within a cohort are the only quantities the sample supports.
+  acquisition.
+- **Counts are unsupported outright — and rates are not thereby supported.** Amended in
+  v1.8: this section previously ended the bullet above with "rates within a cohort are
+  the only quantities the sample supports", which asserts that rates *are* supported,
+  two sentences before the bullet below says the sampling fraction may not be uniform.
+  Whether a rate transfers to the property's real population depends on the sampling
+  method, which is undocumented. Counts are ruled out; rates are unestablished.
 - **The sampling fraction per day is unknown and may not be uniform**, so even
   comparisons of *rates* across weeks could be affected if the sample was drawn
   differently on different days. This is unresolvable from the data and belongs in each
@@ -2511,13 +2528,15 @@ no direction and no disclosure makes it admissible.
 
 ## 11. Document control
 
-- **Version:** 1.7 — final. **Written:** 2026-09-10, before any data access.
+- **Version:** 1.8 — final. **Written:** 2026-09-10, before any data access.
   **Amended:**
   2026-09-10 (v1.1, then v1.2), both before any data access and before the repository
   was initialised; 2026-09-11 (v1.3 and v1.4), after Part 3 was completed and
   committed; 2026-09-12 (v1.5), after the recon completed at `70c5475`; 2026-09-17
   (v1.6), after Part 1 completed; 2026-09-20 (v1.7), after Part 2 completed and all
-  three parts were built, committed and pushed. No version after v1.2 touches §1–§6.
+  three parts were built, committed and pushed; 2026-09-21 (v1.8), while writing the
+  §7.6 opener, which exposed three defects in rules v1.7 had just written. No version
+  after v1.2 touches §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -3027,22 +3046,87 @@ no direction and no disclosure makes it admissible.
   direction and adds no obligation Part 2's report does not already discharge, and the
   §7.6 change alters prose that has not been written against the new rule yet.
 
+
+### v1.8 — 2026-09-21 — final
+
+- **Sections touched:** header, §7.6, §11 and its closing note. **None inside §1–§6.**
+- **Substantive change:** all three came out of writing the §7.6 opener against v1.7's
+  own rule, which is the only way a specification defect of this kind surfaces.
+  - **§7.6's closing-limitation requirement** was "the limitation that bounds **every**
+    analysis here". Too strong for a repository whose parts read two datasets: the
+    strongest limitation available — the GA4 extract capped at 50,000 events per shard —
+    bounds Parts 1 and 2 and does not touch Part 3, a flat Cookie Cats export. Meeting
+    v1.7's letter would have meant demoting to a limitation that spans all three and
+    invalidates no figure. Now: **the limitation that most constrains what a reader may
+    quote, naming which analyses it bounds.**
+  - **§7.6's cross-part inference ban** is scoped to the **per-analysis sentences**. As
+    written it forbade any sentence whose subject spans two analyses, which forbade the
+    closing limitation sentence the same section requires — since naming which analyses
+    a limitation bounds is spanning them by construction.
+  - **A-178's correction protocol extended to wrong interpretations** (A-181). It
+    covered a defect that changes a published figure and said nothing about a wrong
+    inference drawn from correct figures. Part 2 supplies the case: its §9.1 and a note
+    in `part2_10_parallel_track.csv` both assert that the mode its funnel covers is the
+    smaller of the game's two, on user-property counts of 4,585 against 3,548 — while
+    **10,166** users have an observed quickplay level start against **4,774**
+    non-quickplay, so quickplay is the larger mode and the property undercounts
+    participation by nearly threefold. Both counts are correct; the inference is not.
+    The protocol now covers a wrong figure, a wrong interpretation of correct figures,
+    **and a false claim in a committed table's note** — the `part2_10` case shows a note
+    can carry a claim that every figure audit passes — corrected by that part's own
+    build session, disclosed in the report, never silently. §11's closing note carries
+    the distinction: whether the report is *behind* the document or *wrong on its own
+    terms*.
+  - **§10.7.1's own overclaim, found by the same review.** The section ended a bullet
+    with "rates within a cohort are the only quantities the sample supports" — asserting
+    support for rates two sentences before its next bullet says the sampling fraction may
+    not be uniform — and called the fixed row count "a sampling cap", which asserts a
+    truncation mechanism the export does not evidence. Both are corrected: counts are
+    ruled out, rates are **unestablished** pending the undocumented method, and the
+    uniformity is described as an artefact of how the sample was drawn rather than as a
+    cap. This is the same defect the opener's fifth sentence went through three drafts to
+    remove, sitting in the section that governs it.
+- **assumptions.md:** added **A-179 through A-183**. Partially superseded by named
+  field: A-176 (`Decision`, by A-180), A-178 (`Decision`, by A-181). Status lines
+  annotated on both. A-179 records the opener as written; A-182 and A-183 record two
+  Part 2 report defects for its build session to correct.
+- **Touched §1–§6:** **No.** Every change is in the header, §7.6 or §11. **Part 3's
+  pre-registration freeze is unaffected** — it attached at v1.2, commit `c6d72f83`, and
+  its report cites that commit. No committed report is edited by this pass; A-182
+  records a correction for the Part 2 session to make and disclose.
 ---
 
 ## Closing note — the architecture series ends here
 
-v1.7 is the last planned pass. All three parts are built, committed and pushed; the
-recon is closed; every challenge either session raised — A-095, A-134, A-135, A-136,
-A-164 — is answered in the document rather than in a build. Two things remain open by
-design and should not be mistaken for unfinished work: **§9's open question 7**, whether
-BigQuery-derived outputs should be brought under §7.5's byte-identity rule, which waits
-on a materialised-extract decision that nothing now depends on; and the **§7.6 opener
-itself**, which this version specifies and the architecture session writes next.
+v1.8 is the last planned pass. All three parts are built, committed and pushed; the
+recon is closed; every challenge either build session raised — A-095, A-134, A-135,
+A-136, A-164 — is answered in the document rather than in a build.
 
-**If a later change is ever needed**, the protocol in §11 is unchanged and does not
-expire: a session appends a `challenge` or `finding` to `assumptions.md`, the
-architecture session issues v1.8 in the four-field format, and **§1–§6 stay frozen** —
-Part 3's report cites `c6d72f83` and reopening its pre-registration would invalidate a
-published result rather than improve it. The same applies in weaker form to Parts 1 and
-2: their specifications may be amended for a future part's benefit, but their committed
-reports are not reopened to match, and any amendment says so explicitly.
+**v1.7 declared itself last and v1.8 followed within the same working session.** That is
+the protocol operating, not failing: writing the §7.6 opener against v1.7's own rule
+exposed three defects in rules v1.7 had just written — a closing-limitation requirement
+too strong for a two-dataset repository, a cross-part ban that forbade the sentence the
+same section required, and a correction protocol that covered wrong figures but not
+wrong interpretations. A document whose rules are never exercised looks finished; one
+whose rules are exercised gets amended. The lesson is recorded rather than smoothed
+over: **a specification is not finished when it is written, only when something has
+been built against it.**
+
+One thing remains open by design and should not be mistaken for unfinished work:
+**§9's open question 7**, whether BigQuery-derived outputs should be brought under
+§7.5's byte-identity rule, which waits on a materialised-extract decision that nothing
+now depends on.
+
+**If a later change is ever needed**, the protocol in §11 does not expire: a build
+session appends a `challenge` or `finding` to `assumptions.md`, the architecture session
+issues the next version in the four-field format, and **§1–§6 stay frozen** — Part 3's
+report cites `c6d72f83` and reopening its pre-registration would invalidate a published
+result rather than improve it.
+
+**Committed reports are not reopened to match a later specification** — a spec may be
+amended for a future part's benefit while the report that preceded it stands, and any
+such amendment says so explicitly. **The exception, added in v1.8, is a defect in the
+report itself:** a wrong figure, a wrong interpretation drawn from correct figures, or a
+false claim in a committed table's note is corrected by that part's own build session,
+disclosed in the report as a correction, and never edited silently (A-181). The
+difference is whether the report is behind the document or wrong on its own terms.

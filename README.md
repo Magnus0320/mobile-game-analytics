@@ -1,5 +1,8 @@
-We tested whether moving Cookie Cats' progression gate from level 30 to level 40 changes player retention, across 90,189 players split between the two placements, measured at 1 and 7 days after install. Moving the gate to level 40 lowered 7-day retention by 0.82 percentage points, from 19.02% to 18.20%, with a 95% interval running from 1.34 to 0.31 percentage points of lost retention. Keep the gate at level 30; the one thing that would change this is revenue data, because a gate exists to drive monetization and this experiment contains no monetization fields at all.
+Three analyses of public mobile-game data — a pre-registered A/B test on Cookie Cats, and retention and progression analyses of a GA4 sample of Flood-It, specified after a schema survey and before their own queries — with every later definitional change recorded in `assumptions.md`.
 
+Part 1: among the 4,319 users with an observed install event — not the 15,175 in the sample — classic 7-day retention is 5.67% (95% Wilson 4.99–6.44), pooled over the 15 weekly cohorts observable at day 7. Part 2: of the 10,166 users who started a quickplay level, 80.12% finished an attempt and 69.64% of those completed one; the funnel covers quickplay only, and 1,955 users it counts as never starting a level started one in another mode. Part 3: moving Cookie Cats' gate from level 30 to level 40 lowered 7-day retention by 0.82 percentage points across 90,189 assigned players (95% bootstrap interval 1.34 to 0.31 points of loss), so the recommendation is to keep the gate at level 30.
+
+Parts 1 and 2 read a GA4 extract of exactly 50,000 events per shard, so no count in them — users, installs, events — measures the game's real player base, and whether their shares do depends on a sampling method that is undocumented.
 ---
 
 ## Part 1 — Retention and install cohorts

@@ -1,12 +1,12 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.9. All three parts are built, committed and pushed, and their reports
+**Status:** v1.10. All three parts are built, committed and pushed, and their reports
 are not reopened. §1–§6 are Part 3's pre-registration and are **frozen** as of commit
 `c6d72f83` (v1.2); no version after v1.2 changes anything inside them. v1.9 adds one
 deliverable — an interactive Tableau Public dashboard over the three parts, a
 presentation layer that recomputes nothing — and specifies it in **§7.8** before it is
-built. §11 records what changed in each version, and §11's closing note says what
-happens if a later change is ever needed.
+built; v1.10 restores Part 1's segment view to it. §11 records what changed in each
+version, and §11's closing note says what happens if a later change is ever needed.
 
 **Purpose.** This document fixes the decisions that must not be made after seeing
 results. Implementation sessions read it and follow it. They do not edit it.
@@ -1314,9 +1314,11 @@ document exists to prevent.
   `5eb02fd`.** The dashboard **recomputes nothing** — no aggregation that changes a
   value, no calculated field that produces a number not in a cell, no `ZN()`,
   `IFNULL(…, 0)` or other null-to-zero conversion on any value column.
-- **The permitted sources, by name — thirteen files and no others:**
+- **The permitted sources, by name — fourteen files and no others** (thirteen in v1.9;
+  `part1_07` added in v1.10):
   `part1_01_population_reconciliation.csv`, `part1_03_classic_retention_weekly.csv`,
-  `part1_04_classic_retention_pooled.csv`, `part2_03_funnel.csv`,
+  `part1_04_classic_retention_pooled.csv`, `part1_07_retention_by_segment.csv`,
+  `part2_03_funnel.csv`,
   `part2_08_segment_constancy.csv`, `part2_09_funnel_by_segment.csv`,
   `part2_10_parallel_track.csv`, `part2_report_figures.csv`, `part3_02_srm.csv`,
   `part3_03_power.csv`, `part3_05_retention_rates.csv`,
@@ -1330,7 +1332,7 @@ document exists to prevent.
   through the back door.
 - **The workbook is a snapshot.** It is extracted at `5eb02fd` and goes **stale** if any
   source file changes. `dashboard/README.md` records the snapshot commit and the
-  **SHA-256 of each of the thirteen source files at that commit**, so staleness is a
+  **SHA-256 of each of the fourteen source files at that commit**, so staleness is a
   checksum comparison rather than a judgement. A stale workbook is re-extracted and
   republished, never patched by hand.
 
@@ -1371,21 +1373,24 @@ document exists to prevent.
 - **Filter on status, not on nullness.** Status is the documented reason a cell is
   absent; an empty value is only its symptom.
 - **An ineligible cell never plots** — not as a zero, not as a gap bridged by a line.
-- **A measured zero always plots.** Across the thirteen sources at `5eb02fd` there is
-  exactly one, and it is in **`part1_03_classic_retention_weekly.csv`**: **W01 at D30**,
-  `status = reported`, `retained = 0` of 176. It must appear as a point at 0% with its
-  Wilson interval (0.00 to 2.14), and it is the check that the build has not confused
-  "zero" with "missing". The other twelve sources hold no measured zero — Part 1's pooled
-  table and every Part 2 funnel cell have a positive numerator.
-- **Three more measured zeros exist in a table the dashboard does not read.**
-  `part1_07_retention_by_segment.csv` holds three reported D30 zeros: **Canada**
-  (`geo.country`, 0 of 104), **Australia** (`geo.country`, 0 of 84) and **en-ca**
-  (`device.language`, 0 of 87), each `status = reported`. That table is **not** one of
-  the thirteen sources, and Part 1's retention by segment is on §7.8.6's out-of-scope
-  list. **If it is ever added as a source**, each of the three must appear at 0% with its
-  Wilson interval whenever its dimension is selected — the same check, three more times,
-  on the view where a small segment's zero is most likely to be mistaken for a missing
-  value.
+- **A measured zero always plots.** Across the fourteen sources at `5eb02fd` there are
+  exactly **four**, all at D30 and all `status = reported`. Each must appear as a point
+  at 0% with its Wilson interval, and together they are the check that the build has not
+  confused "zero" with "missing":
+
+  | Table | Cell | Retained | Wilson interval |
+  |---|---|---|---|
+  | `part1_03_classic_retention_weekly.csv` | W01 | 0 of 176 | 0.00 – 2.14 |
+  | `part1_07_retention_by_segment.csv` | `geo.country` = Canada | 0 of 104 | 0.00 – 3.56 |
+  | `part1_07_retention_by_segment.csv` | `geo.country` = Australia | 0 of 84 | 0.00 – 4.37 |
+  | `part1_07_retention_by_segment.csv` | `device.language` = en-ca | 0 of 87 | 0.00 – 4.23 |
+
+  The three `part1_07` zeros must appear **whenever their dimension is selected** — the
+  segment view is where a small segment's zero is likeliest to be mistaken for a missing
+  value, and a filter left on "exclude zeros or nulls" would remove all three silently.
+  The other twelve sources hold no measured zero: Part 1's pooled table and every Part 2
+  funnel cell have a positive numerator. (In v1.9 `part1_07` was not a source and these
+  three were a conditional requirement; v1.10 makes them live.)
 
 #### 7.8.4 What each part's view shows
 
@@ -1401,6 +1406,52 @@ from `part1_04` as reference lines).
   be an artefact of how each week was sampled.
 - **Classic retention only. Rolling retention is not shown** (§7.8.6).
 - Title: *Classic retention by install cohort*.
+
+**Part 1 — classic retention by segment** (`part1_07`) — restored in v1.10.
+
+- **Classic retention only**, D1, D7 and D30, pooled per segment, from `rate_pct_value`
+  with **Wilson intervals** from `wilson_lo_pct_value` and `wilson_hi_pct_value`, and
+  `denominator` in the tooltip. **Rolling retention is not shown here either.**
+- **Status filter** as §7.8.3, though every `part1_07` cell is `reported` at `5eb02fd`;
+  the filter stays so that a later re-extract with an ineligible cell cannot plot it.
+- **One dimension at a time**, segments as **discrete points with intervals** — no
+  connecting line across segments, which have no order, and no line across horizons,
+  which would read as a curve drawn through three differently-denominated pools.
+- **"Other"** plots as its own point, labelled with its `segments_pooled` count.
+- Each horizon is pooled over the cohorts eligible at that horizon (A-152), so a
+  segment's D1, D7 and D30 have different denominators; the tooltip shows each.
+- **Do not surface `part1_07`'s `caveat` or `note` columns.** The `app_info.version`
+  caveat there says §10.7.5 states no constancy test for that dimension, which was true
+  when Part 1 was built and was superseded by v1.6 (A-154). The committed table is not
+  reopened; the dashboard carries the current statement in its own caption instead.
+- Title: *Classic retention by segment*. The view is **not** described as showing that
+  one segment retains better than another: Part 1's report finds the intervals overlap
+  heavily almost everywhere and supports only the weaker statement that no segment
+  behaves wildly unlike the pooled figure.
+
+**The segment control — shared dimension, never a shared segment.** Part 1 and Part 2
+may share **one parameter that selects the dimension** — `geo.country`, `platform`,
+`device.category`, `device.language` or `app_info.version`, the same five names in both
+tables. They may **not** share a segment selection, highlight, filter action or legend,
+for three reasons the tables themselves show:
+
+- **Different populations.** Part 1's segments partition the **4,319 users with an
+  observed install event**; Part 2's partition all **15,175 users** in the window.
+- **Different named segments.** Part 1 names a segment at ≥ 100 installers, Part 2 at
+  ≥ 200 users at S0, so the lists differ: Germany, Mexico and United Kingdom are named in
+  Part 2 and pooled into "Other" in Part 1, and likewise app versions 2.59 and 2.6.27 and
+  languages de-de and en. **"Other" is a different set in each view**, and a shared
+  highlight on it would equate two different pools.
+- **Different caveats on the same dimension.** `app_info.version` is non-constant for
+  **8.76%** of Part 2's 15,175 users (1,330) — above §10.7.5's 5.0% trigger, so caveated —
+  but for **1.97%** of Part 1's 4,319 installers (85; A-148), below it. One dimension,
+  one attribution rule, two different answers, because the populations differ.
+
+So each view draws its segment list from **its own table**; the parameter is labelled
+**"Segment by"** and names no population; and the two views sit in **separate panels
+with separate axes** — Part 1's axis is a retention rate and Part 2's a share reaching a
+step, and a shared axis would present them as one measure. **Each segmented view
+captions its own population** (caption 6).
 
 **Part 2 — progression funnel** (`part2_03`; by segment from `part2_09`).
 
@@ -1456,9 +1507,15 @@ substance as written:
    between weeks may be sampling artefacts rather than changes in retention.
 5. **Part 2's mode coverage.** The funnel covers **quickplay only**, and **1,955** users
    it counts as never starting a level started one in another mode.
-6. **Part 2's segments.** Every segment is the user's **value at their first observed
-   event**; and the `app_info.version` view carries its **8.76%** non-constancy caveat —
-   above §10.7.5's 5.0% trigger — and says it means **version at install**.
+6. **Segments — on each segment view, Part 1's and Part 2's.** Every segment is the
+   user's **value at their first observed event**, so `app_info.version` means
+   **version at install**. **Each view names its own population**: Part 1's segments are
+   of the **4,319 users with an observed install event**, Part 2's of all **15,175 users**
+   — stated on each view, not once for both, so a shared dimension control cannot imply a
+   shared population. Part 2's `app_info.version` view carries its **8.76%**
+   non-constancy caveat, above §10.7.5's 5.0% trigger. Part 1's segment view also states
+   that its intervals overlap heavily and do not support ranking one segment above
+   another.
 7. **Part 3's population.** The effect is across **all assigned players** — an
    intention-to-treat estimate, not the effect on players who reached either gate.
 8. **Part 3's SRM.** The p-value **0.00869** is **above the pre-registered 0.001
@@ -1493,8 +1550,8 @@ opener was written under. An unregistered typed figure is a defect.
 - **Anything about revenue or purchases** (§10.6.1). Part 2 may not be presented as
   monetization, and `spend_virtual_currency` is not revenue.
 
-**Left out for scope** — in the reports, not on the dashboard: Part 1's retention by
-segment; Part 3's D1 guardrail and its power table; Part 2's diagnostic events,
+**Left out for scope** — in the reports, not on the dashboard: Part 3's D1 guardrail
+and its power table; Part 2's diagnostic events,
 out-of-order users and the parallel-track table beyond the one caption figure.
 
 ---
@@ -2772,7 +2829,7 @@ no direction and no disclosure makes it admissible.
 
 ## 11. Document control
 
-- **Version:** 1.9. **Written:** 2026-09-10, before any data access.
+- **Version:** 1.10. **Written:** 2026-09-10, before any data access.
   **Amended:**
   2026-09-10 (v1.1, then v1.2), both before any data access and before the repository
   was initialised; 2026-09-11 (v1.3 and v1.4), after Part 3 was completed and
@@ -2780,8 +2837,8 @@ no direction and no disclosure makes it admissible.
   (v1.6), after Part 1 completed; 2026-09-20 (v1.7), after Part 2 completed and all
   three parts were built, committed and pushed; 2026-09-21 (v1.8), while writing the
   §7.6 opener, which exposed three defects in rules v1.7 had just written; 2026-09-23
-  (v1.9), to specify the Tableau Public dashboard before it is built. No version after
-  v1.2 touches §1–§6.
+  (v1.9), to specify the Tableau Public dashboard before it is built; 2026-09-23
+  (v1.10), to restore Part 1's segment view to it. No version after v1.2 touches §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -3394,6 +3451,40 @@ no direction and no disclosure makes it admissible.
   attached at v1.2, commit `c6d72f83`, and its report cites that commit. No part, report
   or committed table is reopened: the dashboard reads the tables as they stand at
   `5eb02fd` and writes nothing back.
+
+### v1.10 — 2026-09-23
+
+- **Sections touched:** header, §7.8.1, §7.8.3, §7.8.4, §7.8.5, §7.8.6, §11. **None
+  inside §1–§6.**
+- **Substantive change:**
+  - **Part 1's segment view restored.** `part1_07_retention_by_segment.csv` becomes the
+    **fourteenth** source, and "Part 1's retention by segment" comes off §7.8.6's
+    out-of-scope list. The brief had requested it; v1.9 cut it for scope, not for any
+    data or method reason (A-188).
+  - **§7.8.3 — four live zero checks.** Canada 0 of 104, Australia 0 of 84 and en-ca
+    0 of 87, all D30 in `part1_07`, join W01 0 of 176 in `part1_03`, each required at 0%
+    with its interval whenever its dimension is selected.
+  - **§7.8.4 — the Part 1 segment view specified.** Classic only, pooled D1/D7/D30 per
+    segment with Wilson intervals, status filter kept, discrete points with no lines,
+    "Other" labelled with its pooled count, rolling excluded. `part1_07`'s `caveat` and
+    `note` columns are **not surfaced**: the app-version caveat there predates v1.6's
+    generalised constancy rule (A-154), so the dashboard's caption carries the current
+    statement and the committed table is not reopened.
+  - **§7.8.4 — the segment control.** Part 1 and Part 2 may share a **dimension**
+    parameter and **nothing finer**: no shared segment selection, highlight, filter
+    action or legend, separate panels and separate axes. The tables show why: different
+    populations (4,319 installers against 15,175 users), different named segments under
+    different floors — so **"Other" is a different pool in each view** — and a
+    non-constancy caveat that applies to one view's `app_info.version` and not the
+    other's. The parameter is labelled "Segment by" and names no population.
+  - **§7.8.5 — caption 6 rewritten** for both segment views: value at first event, each
+    view's own population stated on that view, Part 2's 8.76% caveat, and Part 1's
+    overlap statement from its report.
+- **assumptions.md:** added **A-188**. Partially superseded by named field: A-186
+  (`Decision`, by A-188, in respect of the source list and the zero checks). Status line
+  annotated.
+- **Touched §1–§6:** **No.** Part 3's freeze is unaffected. No part, report or committed
+  table is reopened.
 ---
 
 ## Closing note — the architecture series ends here

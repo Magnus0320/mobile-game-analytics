@@ -1,13 +1,12 @@
 # ARCHITECTURE.md — Mobile Game Player Analytics Case Study
 
-**Status:** v1.8 — **the final architecture pass.** All three parts are built,
-committed and pushed. §1–§6 are Part 3's pre-registration and are **frozen** as of
-commit `c6d72f83` (v1.2); no version after v1.2 changes anything inside them. v1.7
-closes the one challenge Part 2 raised (A-164) and settles the README opener, which
-A-118 had reserved until all three analyses existed. Nothing else is re-specified:
-Parts 1, 2 and 3 are complete and their reports are committed. §11 records what
-changed in each version, and §11's closing note says what happens if a later change
-is ever needed.
+**Status:** v1.9. All three parts are built, committed and pushed, and their reports
+are not reopened. §1–§6 are Part 3's pre-registration and are **frozen** as of commit
+`c6d72f83` (v1.2); no version after v1.2 changes anything inside them. v1.9 adds one
+deliverable — an interactive Tableau Public dashboard over the three parts, a
+presentation layer that recomputes nothing — and specifies it in **§7.8** before it is
+built. §11 records what changed in each version, and §11's closing note says what
+happens if a later change is ever needed.
 
 **Purpose.** This document fixes the decisions that must not be made after seeing
 results. Implementation sessions read it and follow it. They do not edit it.
@@ -905,7 +904,7 @@ has failed.
 
 ```
 mobile-game-analytics/
-├── README.md                     # opens with three PM-actionable sentences (§7.6)
+├── README.md                     # opens with the n + 2 sentence opener (§7.6)
 ├── ARCHITECTURE.md               # this file; read-only to implementation sessions
 ├── assumptions.md                # append-only judgement-call log
 ├── requirements.txt              # direct dependencies, == pinned
@@ -925,6 +924,10 @@ mobile-game-analytics/
 │   ├── tables/                   # committed
 │   ├── figures/                  # committed
 │   └── run_manifest.json         # committed
+├── dashboard/                    # v1.9: presentation layer only (§7.8)
+│   ├── README.md                 # sources, snapshot commit, checksums, figure register
+│   ├── dashboard.png             # static image of the published dashboard
+│   └── mobile_game_analytics.twbx  # packaged Tableau workbook
 └── reports/
     ├── part3_cookie_cats_experiment.md
     ├── recon_ga4_sample.md               # the recon findings document
@@ -1189,6 +1192,26 @@ region — everything in `README.md` above the first `##` heading — and grants
 one else. Each part's own `## Part N` section stays with that part's session, as it
 always has.
 
+**One link line — added in v1.9.** The opener region may carry **exactly one link line**
+after the *n* + 2 sentences and before the first `##` heading, pointing to the dashboard
+(§7.8). It is **not a sentence and does not count towards *n* + 2**, and it is held to a
+stricter rule than the sentences are: **no figure and no claim about any result** — only
+what the link is and where its provenance is documented, in this form:
+
+> Interactive dashboard: [Tableau Public](URL) · how it was built:
+> [`dashboard/README.md`](dashboard/README.md)
+
+where `URL` is the published workbook's address.
+
+The line is permitted here rather than in a section of its own because "near the top" is
+what makes a dashboard link useful, and the only thing above `## Part 1` is the opener
+region: a new `## Dashboard` section there would place a presentation layer ahead of the
+three analyses in the README's own order and create a second owner for one line. The
+no-figure, no-claim rule is what keeps the line from becoming a sixth sentence that
+escapes §7.6's population requirement. It is written by the **architecture session once
+the Tableau Public URL exists**; until then nothing is written — a dead or placeholder
+link on the front page is worse than none.
+
 ### 7.7 Execution order
 
 `run_part3.py` runs these steps in this order, and this list is the definition of
@@ -1275,6 +1298,204 @@ The steps are also arranged so that **every hard stop precedes every reported
 number**: steps 1–6 and the assertion group at step 9 are the only places the run
 can terminate on the data, and all of them sit ahead of step 19's output write. A
 run that reaches step 19 has already established that the file is the file.
+
+### 7.8 The dashboard — added in v1.9
+
+An interactive **Tableau Public** dashboard over the three parts, built by hand by the
+project author. It is a **presentation layer only**: no new SQL, no new Python, and no
+figure that is not already a committed cell. Everything below is fixed **before** the
+build, for the same reason the analyses were specified before they ran: a dashboard's
+chart choices are claims, and a claim made after seeing how it looks is the one this
+document exists to prevent.
+
+#### 7.8.1 Sources, and the snapshot
+
+- **Every figure is read from a committed CSV in `outputs/tables/` as of commit
+  `5eb02fd`.** The dashboard **recomputes nothing** — no aggregation that changes a
+  value, no calculated field that produces a number not in a cell, no `ZN()`,
+  `IFNULL(…, 0)` or other null-to-zero conversion on any value column.
+- **The permitted sources, by name — thirteen files and no others:**
+  `part1_01_population_reconciliation.csv`, `part1_03_classic_retention_weekly.csv`,
+  `part1_04_classic_retention_pooled.csv`, `part2_03_funnel.csv`,
+  `part2_08_segment_constancy.csv`, `part2_09_funnel_by_segment.csv`,
+  `part2_10_parallel_track.csv`, `part2_report_figures.csv`, `part3_02_srm.csv`,
+  `part3_03_power.csv`, `part3_05_retention_rates.csv`,
+  `part3_06_primary_inference.csv`, `part3_11_decision.csv`.
+- **Not sources:** the raw query results (`part*_q*.csv`), which are what the rendered
+  tables were built from and may differ in shape, so using them would let the
+  dashboard and the report disagree; every `.meta.json` sidecar and budget ledger;
+  every `recon_*` file; and **anything under `data/`**. The last matters most: A-025
+  keeps the Cookie Cats CSV out of the repository on redistribution grounds, and a
+  `.twbx` packaging it — then published to a public server — would redistribute it
+  through the back door.
+- **The workbook is a snapshot.** It is extracted at `5eb02fd` and goes **stale** if any
+  source file changes. `dashboard/README.md` records the snapshot commit and the
+  **SHA-256 of each of the thirteen source files at that commit**, so staleness is a
+  checksum comparison rather than a judgement. A stale workbook is re-extracted and
+  republished, never patched by hand.
+
+#### 7.8.2 Columns: the full-precision column, never the display column
+
+- **Plot and label from the full-precision column only.** In Parts 1 and 2 that is the
+  `*_value` column. Part 3's tables do not use the suffix: in its quantity tables
+  (`part3_02`, `part3_03`, `part3_06`, `part3_11`) the full-precision column is
+  **`value`**, and in `part3_05_retention_rates.csv` it is **`rate_pp`**. Those are the
+  permitted columns; `value_display`, `rate_pp_display` and every `*_display` column
+  are not.
+- **Why:** display columns are formatted strings. They carry thousands separators,
+  rounding, and the literal text `NULL` in ineligible cells — `part1_03`'s five
+  ineligible rows hold an empty `rate_pct_value` and a `rate_pct_display` of `NULL`, and
+  a tool that parses the second as text or coerces it will either drop the cell or
+  plot it wrongly. Labels are formatted **from** the value column in Tableau, at two
+  decimal places for percentages, to match the reports.
+- **One exception: display columns as tooltip text.** A `*_display` column may appear
+  **as tooltip text only** — never as a plotted coordinate, never as a mark's position,
+  size or colour, and **never inside a calculated field**. The column rule exists to stop
+  formatted strings being read as numbers and `NULL` being plotted; a tooltip does
+  neither, and it shows the committed string exactly as the report printed it. This is
+  what lets **Part 2's Wilson intervals** appear: they exist **only** as display columns —
+  `share_of_s0_lo_display`, `share_of_s0_hi_display`, `step_conversion_lo_display`,
+  `step_conversion_hi_display` — with no full-precision twin. Omitting them would show
+  Part 1's uncertainty beside a Part 2 that looks exact. Parsing those strings back into
+  numbers to draw interval bars remains forbidden: that is plotting rounded text, which
+  is precisely what the rule prevents. Revised in review: v1.9's first draft kept the
+  rule without exception and listed Part 2's intervals as left out.
+
+#### 7.8.3 Status: reportable cells plot, ineligible cells never do, zeros always do
+
+- **Any table with a status column is filtered to `reported` before anything plots.**
+  The statuses present at `5eb02fd` are `reported`, `ineligible_window` (Part 1's
+  weekly tables) and `not_applicable` (Part 2's step conversion at S0). Part 2's funnel
+  tables carry **two** status columns, and each governs its own measure:
+  `share_of_s0_status` for bar heights, `step_conversion_status` for conversion labels.
+- **Filter on status, not on nullness.** Status is the documented reason a cell is
+  absent; an empty value is only its symptom.
+- **An ineligible cell never plots** — not as a zero, not as a gap bridged by a line.
+- **A measured zero always plots.** Across the thirteen sources at `5eb02fd` there is
+  exactly one, and it is in **`part1_03_classic_retention_weekly.csv`**: **W01 at D30**,
+  `status = reported`, `retained = 0` of 176. It must appear as a point at 0% with its
+  Wilson interval (0.00 to 2.14), and it is the check that the build has not confused
+  "zero" with "missing". The other twelve sources hold no measured zero — Part 1's pooled
+  table and every Part 2 funnel cell have a positive numerator.
+- **Three more measured zeros exist in a table the dashboard does not read.**
+  `part1_07_retention_by_segment.csv` holds three reported D30 zeros: **Canada**
+  (`geo.country`, 0 of 104), **Australia** (`geo.country`, 0 of 84) and **en-ca**
+  (`device.language`, 0 of 87), each `status = reported`. That table is **not** one of
+  the thirteen sources, and Part 1's retention by segment is on §7.8.6's out-of-scope
+  list. **If it is ever added as a source**, each of the three must appear at 0% with its
+  Wilson interval whenever its dimension is selected — the same check, three more times,
+  on the view where a small segment's zero is most likely to be mistaken for a missing
+  value.
+
+#### 7.8.4 What each part's view shows
+
+**Part 1 — classic retention by install cohort** (`part1_03`, with the pooled figures
+from `part1_04` as reference lines).
+
+- D1, D7 and D30 by weekly cohort, from `rate_pct_value`, each with its **Wilson
+  interval** from `wilson_lo_pct_value` and `wilson_hi_pct_value`.
+- **Not a trend.** The view is not titled, subtitled or described as a trend, and the
+  cohorts are plotted as **discrete points with intervals and no connecting line** — a
+  line is a trend encoding whatever the title says. section 8.3 of Part 1's report records that
+  the sampling fraction may vary by day, so a difference between two weeks' rates may
+  be an artefact of how each week was sampled.
+- **Classic retention only. Rolling retention is not shown** (§7.8.6).
+- Title: *Classic retention by install cohort*.
+
+**Part 2 — progression funnel** (`part2_03`; by segment from `part2_09`).
+
+- **Bar height encodes share of S0** — `share_of_s0_pct_value`, the strict funnel.
+  **Counts appear only in labels** (`users_strict`) and never as bar length: a length
+  encoding a count would present a sampled count as a magnitude, which §10.7.1 rules
+  out.
+- **Intervals as tooltips.** Each bar's tooltip carries its Wilson bounds from
+  `share_of_s0_lo_display` and `share_of_s0_hi_display`, and each conversion label's
+  tooltip from `step_conversion_lo_display` and `step_conversion_hi_display` (§7.8.2's
+  exception). They are text, not interval bars.
+- **Step conversion** labels S1–S3 from `step_conversion_pct_value`, filtered on
+  `step_conversion_status = reported`. **S0's step conversion is null** (`not_applicable`)
+  and carries **no conversion label at all** — it must not render as 0%.
+- The segment view uses the same encoding, one dimension at a time. "Other
+  (*n* segments)" rows plot as their own bar, labelled with `segments_pooled`.
+- **Nothing about revenue or purchases appears anywhere on the dashboard**, and Part 2's
+  view is titled *Progression funnel* — never monetization (§10.6.1).
+
+**Part 3 — the gate experiment** (`part3_06`, `part3_03`, `part3_05`, `part3_02`,
+`part3_11`).
+
+- **The effect:** `delta_7_pp` as a point with its **bootstrap interval**
+  (`bootstrap_ci_low_pp`, `bootstrap_ci_high_pp`) — the estimation instrument §4.3
+  assigns the threshold comparison — against a zero line.
+- **The ±1.00 pp action-threshold band**, sourced from the committed cell
+  `part3_03_power.csv` → `action_threshold_pp` → `value`. The band's edges are that
+  value and its negation. **This sign operation is the only transformation the
+  dashboard performs, and it is the band's definition, not a new figure**: §1.4 fixes
+  the threshold in absolute percentage points and §1.6 applies it symmetrically, and
+  no number appears on the dashboard that is not the cell's own.
+- **Arm rates** from `part3_05` (`rate_pp`, with `denominator`) for the primary metric,
+  so the effect in percentage points has its baseline beside it.
+- **The recommendation** as text from `part3_11` → `recommendation`, with `rule_path`.
+- **The SRM result** as text from `part3_02` → `exact_binomial_p`, `failure_threshold`,
+  `tripped`.
+
+#### 7.8.5 Required captions
+
+Every caption is held to §7.6's standard: it names its population and asserts nothing a
+part's negative-results section rules out. Each of the following is **required**, in
+substance as written:
+
+1. **Part 1's population.** The figures describe the **4,319 users with an observed
+   install event, not the 15,175 in the sample**.
+2. **Counts and shares — on every Part 1 and Part 2 view**, matching the opener's fifth
+   sentence in substance: the GA4 extract holds **exactly 50,000 events per shard**, so
+   no count on these views — users, installs, events — measures the game's real player
+   base, and whether their shares do depends on a sampling method that is undocumented.
+3. **Identity — on every Part 1 and Part 2 view.** "Users" are device-installs:
+   `user_id` is null on every row, so no figure here counts people.
+4. **Part 1's weekly view.** The sampling fraction may vary by day, so differences
+   between weeks may be sampling artefacts rather than changes in retention.
+5. **Part 2's mode coverage.** The funnel covers **quickplay only**, and **1,955** users
+   it counts as never starting a level started one in another mode.
+6. **Part 2's segments.** Every segment is the user's **value at their first observed
+   event**; and the `app_info.version` view carries its **8.76%** non-constancy caveat —
+   above §10.7.5's 5.0% trigger — and says it means **version at install**.
+7. **Part 3's population.** The effect is across **all assigned players** — an
+   intention-to-treat estimate, not the effect on players who reached either gate.
+8. **Part 3's SRM.** The p-value **0.00869** is **above the pre-registered 0.001
+   threshold**, so the sample ratio check did not trip — and it is below 0.05, which is
+   why the threshold matters and why it is stated rather than left to be inferred.
+9. **Part 3's band.** The ±1.00 pp band is the threshold that decides the **benefit**
+   branches of §1.6; this result fired **R3**, a significant decrease, where the band
+   does not enter — so the band shows the scale of the bar, not the reason for the
+   recommendation.
+
+**Figures in captions.** Each is inserted as a field from its source row where Tableau
+permits; where it does not, it may be typed, but **every typed figure is registered in
+`dashboard/README.md` against its table, row and column** — the same discipline the
+opener was written under. An unregistered typed figure is a defect.
+
+#### 7.8.6 What is left out
+
+`dashboard/README.md` carries this list, and the dashboard links to it.
+
+**Left out because a chart cell cannot carry it:**
+
+- **Rolling retention** (Part 1 report §5; §10.5.3). Its weekly series is right-censored
+  and is not a trend, and its pooled figures blend differently censored cohorts — a cell
+  carries neither caveat.
+- **The `level_end` reconciliation** (Part 2 report §6; A-175). The finding is an
+  asymmetry in both directions; a single plotted share shows its magnitude without its
+  direction, which A-175 forbids a report from doing.
+- **Part 1's `first_open_time` sensitivity figure** (A-123). It never appears in a
+  results table and never becomes a headline, and a dashboard tile is both.
+- **Part 3's engagement figures** (`part3_08`; §5.1). The mean of `sum_gamerounds` is
+  reported with and without one extreme row, and a single bar carries one of the two.
+- **Anything about revenue or purchases** (§10.6.1). Part 2 may not be presented as
+  monetization, and `spend_virtual_currency` is not revenue.
+
+**Left out for scope** — in the reports, not on the dashboard: Part 1's retention by
+segment; Part 3's D1 guardrail and its power table; Part 2's diagnostic events,
+out-of-order users and the parallel-track table beyond the one caption figure.
 
 ---
 
@@ -1407,7 +1628,30 @@ there. This is the only path in the repository the architecture session writes b
 `ARCHITECTURE.md` itself, and the grant exists because the opener is the one piece of
 prose that must speak for all three analyses at once. It is bound by §7.6's
 quoted-figures-only rule, which is what lets it be written by a session that has no
-renderer.
+renderer. The opener region includes §7.6's single **dashboard link line** (v1.9), so
+that line is the architecture session's too.
+
+**The dashboard build owns `dashboard/` — added in v1.9.** Granted **by prefix**:
+every file under `dashboard/`, whatever its extension. Its expected contents are
+`dashboard/README.md`, `dashboard/dashboard.png` and the packaged workbook
+`dashboard/mobile_game_analytics.twbx`. The grantee is **the project author, building
+by hand in Tableau** — the first grant in this section to a person rather than a
+session — or a session acting on the author's explicit instruction within this path
+list. It is bound by §7.8.
+
+**The dashboard build must not touch:** anything outside `dashboard/`. In particular it
+writes nothing to `outputs/`, where its sources live and where a write would make the
+workbook's snapshot disagree with the tables it claims to read; nothing to `reports/`;
+nothing to `README.md`, whose link line belongs to the architecture session; and it
+reads nothing from `data/` (§7.8.1). No session writes under `dashboard/` except on the
+author's instruction.
+
+**The README's `### Repository layout` block is not amended to list `dashboard/`.** It
+sits inside `## Part 3`, which is the Part 3 session's under this section, and it
+already describes the repository as Part 3 left it — it omits `sql/`, which Parts 1 and
+2 created. Adding `dashboard/` alone would make a stale block look complete. The
+canonical layout is §7.1, which lists `dashboard/`; readers reach it from the opener's
+link line, and `dashboard/README.md` describes its own contents.
 
 **Two sessions, run sequentially — Part 1, then Part 2.** Not one session and not two
 in parallel. Two, because each part is a separate deliverable with its own report and
@@ -2528,15 +2772,16 @@ no direction and no disclosure makes it admissible.
 
 ## 11. Document control
 
-- **Version:** 1.8 — final. **Written:** 2026-09-10, before any data access.
+- **Version:** 1.9. **Written:** 2026-09-10, before any data access.
   **Amended:**
   2026-09-10 (v1.1, then v1.2), both before any data access and before the repository
   was initialised; 2026-09-11 (v1.3 and v1.4), after Part 3 was completed and
   committed; 2026-09-12 (v1.5), after the recon completed at `70c5475`; 2026-09-17
   (v1.6), after Part 1 completed; 2026-09-20 (v1.7), after Part 2 completed and all
   three parts were built, committed and pushed; 2026-09-21 (v1.8), while writing the
-  §7.6 opener, which exposed three defects in rules v1.7 had just written. No version
-  after v1.2 touches §1–§6.
+  §7.6 opener, which exposed three defects in rules v1.7 had just written; 2026-09-23
+  (v1.9), to specify the Tableau Public dashboard before it is built. No version after
+  v1.2 touches §1–§6.
 - **Owner:** the architecture session. It is the only writer of this file.
 - **Change protocol:** implementation sessions append `challenge` or `finding`
   entries to `assumptions.md`; the architecture session reads them and issues a new
@@ -3065,7 +3310,7 @@ no direction and no disclosure makes it admissible.
     a limitation bounds is spanning them by construction.
   - **A-178's correction protocol extended to wrong interpretations** (A-181). It
     covered a defect that changes a published figure and said nothing about a wrong
-    inference drawn from correct figures. Part 2 supplies the case: its §9.1 and a note
+    inference drawn from correct figures. Part 2 supplies the case: section 9.1 of its report and a note
     in `part2_10_parallel_track.csv` both assert that the mode its funnel covers is the
     smaller of the game's two, on user-property counts of 4,585 against 3,548 — while
     **10,166** users have an observed quickplay level start against **4,774**
@@ -3094,13 +3339,71 @@ no direction and no disclosure makes it admissible.
   pre-registration freeze is unaffected** — it attached at v1.2, commit `c6d72f83`, and
   its report cites that commit. No committed report is edited by this pass; A-182
   records a correction for the Part 2 session to make and disclose.
+
+### v1.9 — 2026-09-23
+
+- **Sections touched:** header, §7.1, §7.6, §7.8 (new), §8, §11 and its closing note.
+  **None inside §1–§6.**
+- **Substantive change:**
+  - **§7.8 (new) — the dashboard, specified before it is built.** A Tableau Public
+    dashboard over the three parts, built by hand, presentation only. **Sources:**
+    thirteen named files from `outputs/tables/` at `5eb02fd` and no others — not the raw
+    `part*_q*` query results, not sidecars or ledgers, not `recon_*`, and nothing from
+    `data/`, since A-025 keeps the Cookie Cats CSV out of the repository and a published
+    `.twbx` packaging it would redistribute it. **Snapshot:** `dashboard/README.md`
+    records the commit and each source's SHA-256, so staleness is a checksum comparison.
+    **Columns:** plot and label from the full-precision column only — `*_value` in Parts
+    1 and 2, `value` in Part 3's quantity tables, `rate_pp` in `part3_05` — never a
+    display column, which carries separators, rounding and the literal `NULL` — with one
+    exception, display columns as **tooltip text only**, never plotted and never in a
+    calculated field, which is how Part 2's Wilson bounds appear, since they exist only as
+    display columns. **Status:** filter to `reported`, on status rather than on
+    nullness; ineligible cells never plot; the one measured zero across the thirteen
+    sources, **W01 at D30** in `part1_03`, must plot at 0% with its interval as the
+    check — and the three D30 segment zeros in `part1_07` (Canada, Australia, en-ca),
+    which is not a source, are named so that adding it later carries the same check. **Per part:** Part 1 as discrete points
+    with Wilson intervals and **no connecting line**, never titled a trend, rolling
+    omitted; Part 2 with bar height as share of S0, counts only in labels, S0's null
+    conversion rendering as no label rather than 0%, and no revenue anywhere; Part 3's
+    effect with its bootstrap interval against a **±1.00 pp band sourced from
+    `part3_03_power.csv` → `action_threshold_pp`** — its negation being the band's
+    definition and the dashboard's only transformation. **Nine required captions**, and a
+    **left-out list** in two halves: what a cell cannot carry, and what is out of scope.
+    Two revisions made in review before commit: the measured-zero statement is scoped to
+    the thirteen sources, with `part1_07`'s three D30 zeros named against a later
+    addition; and the tooltip exception replaced the first draft's omission of Part 2's
+    intervals.
+  - **§7.6 — one link line permitted.** Exactly one, after the *n* + 2 sentences, not
+    counted as a sentence, with **no figure and no claim about any result**. Placed in
+    the opener region because a `## Dashboard` section above `## Part 1` would put a
+    presentation layer ahead of the analyses and give one line a second owner. Written by
+    the architecture session once the URL exists; no placeholder before then.
+  - **§8 — `dashboard/` granted by prefix** to the dashboard build: the project author
+    by hand, or a session on the author's explicit instruction — the first grant to a
+    person rather than a session. It writes nothing outside `dashboard/`, reads nothing
+    from `data/`, and does not write the README's link line. **The README's
+    `### Repository layout` block is not amended**: it is the Part 3 session's, it
+    already omits `sql/`, and listing `dashboard/` alone would make a stale block look
+    complete. `dashboard/` is listed in §7.1, the canonical tree.
+  - **§7.1** — `dashboard/` and its three files added to the tree, and the README line's
+    stale "three PM-actionable sentences" comment corrected to the *n* + 2 opener.
+- **assumptions.md:** added **A-186** and **A-187**. Partially superseded by named field:
+  A-176 (`Decision`, by A-187, in respect of the opener region's contents). Status line
+  annotated.
+- **Touched §1–§6:** **No.** **Part 3's pre-registration freeze is unaffected** — it
+  attached at v1.2, commit `c6d72f83`, and its report cites that commit. No part, report
+  or committed table is reopened: the dashboard reads the tables as they stand at
+  `5eb02fd` and writes nothing back.
 ---
 
 ## Closing note — the architecture series ends here
 
-v1.8 is the last planned pass. All three parts are built, committed and pushed; the
-recon is closed; every challenge either build session raised — A-095, A-134, A-135,
-A-136, A-164 — is answered in the document rather than in a build.
+v1.8 was the last planned **correction** pass. All three parts are built, committed and
+pushed; the recon is closed; every challenge either build session raised — A-095,
+A-134, A-135, A-136, A-164 — is answered in the document rather than in a build.
+**v1.9 is different in kind:** it adds a new deliverable, the dashboard, and specifies
+it before it exists. It reopens nothing — no part, no report, no committed table — and
+it is the protocol below doing what it was left standing for.
 
 **v1.7 declared itself last and v1.8 followed within the same working session.** That is
 the protocol operating, not failing: writing the §7.6 opener against v1.7's own rule
